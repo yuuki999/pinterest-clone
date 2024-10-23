@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  pins      Pin[]
+  likes     Like[]
+  saves     Save[]
+}
+
+model Pin {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  imageUrl    String
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  likes       Like[]
+  saves       Save[]
+  tags        Tag[]
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  userId    String
+  pinId     String
+  user      User     @relation(fields: [userId], references: [id])
+  pin       Pin      @relation(fields: [pinId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, pinId])
+}
+
+model Save {
+  id        String   @id @default(uuid())
+  userId    String
+  pinId     String
+  user      User     @relation(fields: [userId], references: [id])
+  pin       Pin      @relation(fields: [pinId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, pinId])
+}
+
+model Tag {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  pins      Pin[]
+  createdAt DateTime @default(now())
+}
