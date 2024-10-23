@@ -13,7 +13,7 @@ export function Header() {
           <Link href="/" className="font-semibold">
             ホーム
           </Link>
-          <Link href="/create" className="font-semibold">
+          <Link href="/images/upload" className="font-semibold">
             作成
           </Link>
         </div>

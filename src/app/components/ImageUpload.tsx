@@ -1,46 +1,53 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Upload, X } from 'lucide-react';
 
-export default function ImageUpload() {
+type UploadedImage = {
+  url: string;
+  key: string;
+};
+
+interface ImageUploadProps {
+  onUpload: (image: UploadedImage) => void;
+}
+
+export function ImageUpload({ onUpload }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const uploadToS3 = async (file: File) => {
-    try {
-      // Get presigned URL
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileType: file.type }),
-      });
-      
-      const { url, fields, key } = await response.json();
-      
-      // Upload to S3
-      const formData = new FormData();
-      Object.entries(fields).forEach(([key, value]) => {
-        formData.append(key, value as string);
-      });
-      formData.append('file', file);
+  // 画像をアップロードする。
+  const uploadToS3 = async (file: File): Promise<UploadedImage> => {
+    // 1. Get presigned URL
+    const response = await fetch('/api/images/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contentType: file.type }),
+    });
 
-      const uploadResponse = await fetch(url, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error('Upload failed');
-      }
-
-      // Return the S3 URL of the uploaded image
-      return `https://${process.env.NEXT_PUBLIC_AWS_BUCKET_NAME}.s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com/${key}`;
-    } catch (err) {
-      console.error('Error uploading file:', err);
-      throw err;
+    if (!response.ok) {
+      throw new Error('Failed to get upload URL');
     }
+
+    const { uploadUrl, publicUrl, key } = await response.json();
+
+    // 2. Upload to S3
+    const uploadResponse = await fetch(uploadUrl, {
+      method: 'PUT',
+      body: file,
+      headers: {
+        'Content-Type': file.type,
+      },
+      mode: 'cors', // CORSモードを明示的に指定
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error('Failed to upload image');
+    }
+
+    return { url: publicUrl, key };
   };
 
+  // ファイルを選択すると発火
   const handleDrop = useCallback(async (e: React.DragEvent<HTMLDivElement> | React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     
@@ -62,19 +69,17 @@ export default function ImageUpload() {
       reader.readAsDataURL(file);
 
       // Upload to S3
-      const imageUrl = await uploadToS3(file);
-      console.log('Uploaded image URL:', imageUrl);
-      
-      // Here you would typically save the imageUrl to your database
+      const uploadedImage = await uploadToS3(file);
+      onUpload(uploadedImage);
       
     } catch (err) {
-      setError('Upload failed. Please try again.');
-      console.error('Upload failed. Please try again.: ', err);
+      setError('アップロードに失敗しました。もう一度お試しください。');
+      console.error(err)
       setPreview(null);
     } finally {
       setUploading(false);
     }
-  }, []);
+  }, [onUpload]);
 
   return (
     <div className="w-full max-w-md mx-auto p-6">
@@ -91,7 +96,10 @@ export default function ImageUpload() {
               className="max-w-full h-auto rounded"
             />
             <button
-              onClick={() => setPreview(null)}
+              onClick={() => {
+                setPreview(null);
+                setError(null);
+              }}
               className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-lg"
             >
               <X className="w-4 h-4" />
@@ -114,10 +122,8 @@ export default function ImageUpload() {
       </div>
 
       {uploading && (
-        <div className="mt-4">
-          <div className="w-full h-2 bg-gray-200 rounded">
-            <div className="h-full bg-blue-500 rounded animate-pulse" />
-          </div>
+        <div className="mt-4 flex justify-center">
+          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
         </div>
       )}
 

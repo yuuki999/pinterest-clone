@@ -1,4 +1,5 @@
 import { prisma } from '@/app/libs/prisma';
+import { getImageUrl } from '@/app/libs/s3';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -35,10 +36,27 @@ export async function GET(request: Request) {
       },
     });
 
+    // S3の署名付きURLを生成
+    const pinsWithSignedUrls = await Promise.all(
+      pins.map(async (pin) => {
+        try {
+          const key = pin.imageUrl.split('.com/').pop()!;
+          const signedUrl = await getImageUrl(key);
+          return {
+            ...pin,
+            imageUrl: signedUrl
+          };
+        } catch (error) {
+          console.error(`Error getting signed URL for pin ${pin.id}:`, error);
+          return pin;
+        }
+      })
+    );
+
     const nextCursor = pins[limit - 1]?.id;
 
     return NextResponse.json({
-      pins,
+      pins: pinsWithSignedUrls,
       nextCursor,
     });
   } catch (error) {
@@ -49,20 +67,14 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { title, description, imageUrl, userId, tags } = await request.json();
+    const { title, description, imageUrl, userId } = await request.json();
 
     const pin = await prisma.pin.create({
       data: {
         title,
         description,
-        imageUrl,
+        imageUrl, // S3のキーを保存
         userId,
-        tags: {
-          connectOrCreate: tags.map((tag: string) => ({
-            where: { name: tag },
-            create: { name: tag },
-          })),
-        },
       },
       include: {
         user: {
@@ -73,12 +85,24 @@ export async function POST(request: Request) {
           },
         },
         tags: true,
+        _count: {
+          select: {
+            likes: true,
+            saves: true,
+          },
+        },
       },
     });
 
-    return NextResponse.json(pin);
+    // 作成したPinの画像URLを署名付きURLに変換
+    const signedImageUrl = await getImageUrl(pin.imageUrl);
+    
+    return NextResponse.json({
+      ...pin,
+      imageUrl: signedImageUrl
+    });
   } catch (error) {
     console.error('Error creating pin:', error);
-    return NextResponse.json({ error: 'Error creating pin' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to create pin' }, { status: 500 });
   }
 }
