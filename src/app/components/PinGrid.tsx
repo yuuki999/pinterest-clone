@@ -3,22 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, MessageCircle, Bookmark } from 'lucide-react';
 import { useInView } from 'react-intersection-observer';
-
-type Pin = {
-  id: string;
-  title: string;
-  description: string | null;
-  imageUrl: string;
-  user: {
-    id: string;
-    name: string | null;
-    image: string | null;
-  };
-  _count: {
-    likes: number;
-    saves: number;
-  };
-};
+import { Pin } from '@/types/pin';
 
 type PinGridProps = {
   initialPins: Pin[];
@@ -103,7 +88,7 @@ export function PinGrid({ initialPins, initialCursor }: PinGridProps) {
               
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  {pin.user.image ? (
+                  {/* {pin.user.image ? (
                     <img
                       src={pin.user.image}
                       alt={pin.user.name || ''}
@@ -111,14 +96,14 @@ export function PinGrid({ initialPins, initialCursor }: PinGridProps) {
                     />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-gray-200" />
-                  )}
-                  <span className="text-sm font-medium">{pin.user.name}</span>
+                  )} */}
+                  {/* <span className="text-sm font-medium">{pin.user.name}</span> */}
                 </div>
                 
                 <div className="flex items-center space-x-2">
                   <button className="flex items-center space-x-1 text-gray-600">
                     <Heart className="w-4 h-4" />
-                    <span className="text-sm">{pin._count.likes}</span>
+                    {/* <span className="text-sm">{pin._count.likes}</span> */}
                   </button>
                   <button className="flex items-center space-x-1 text-gray-600">
                     <MessageCircle className="w-4 h-4" />

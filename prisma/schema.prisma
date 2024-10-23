@@ -7,53 +7,66 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
-  image     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  pins      Pin[]
-  likes     Like[]
-  saves     Save[]
-}
+// model User {
+//   id        String   @id @default(uuid())
+//   email     String   @unique
+//   name      String?
+//   image     String?
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+//   pins      Pin[]    // Userが作成したPin
+//   likes     Like[]
+//   saves     Save[]
+// }
+
+// SNS的な機能が必要な場合
+// model Pin {
+//   id          String   @id @default(uuid())
+//   title       String
+//   description String?
+//   imageUrl    String
+//   userId      String
+//   user        User     @relation(fields: [userId], references: [id])
+//   createdAt   DateTime @default(now())
+//   updatedAt   DateTime @updatedAt
+//   likes       Like[]
+//   saves       Save[]
+//   tags        Tag[]
+// }
 
 model Pin {
-  id          String   @id @default(uuid())
+  id          String   @id @default(cuid())
   title       String
   description String?
   imageUrl    String
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  likes       Like[]
-  saves       Save[]
+  // likes       Like[]
+  // saves       Save[]
   tags        Tag[]
 }
 
-model Like {
-  id        String   @id @default(uuid())
-  userId    String
-  pinId     String
-  user      User     @relation(fields: [userId], references: [id])
-  pin       Pin      @relation(fields: [pinId], references: [id])
-  createdAt DateTime @default(now())
+// model Like {
+//   id        String   @id @default(uuid())
+//   userId    String
+//   pinId     String
+//   user      User     @relation(fields: [userId], references: [id])
+//   pin       Pin      @relation(fields: [pinId], references: [id])
+//   createdAt DateTime @default(now())
 
-  @@unique([userId, pinId])
-}
+//   @@unique([userId, pinId])
+// }
 
-model Save {
-  id        String   @id @default(uuid())
-  userId    String
-  pinId     String
-  user      User     @relation(fields: [userId], references: [id])
-  pin       Pin      @relation(fields: [pinId], references: [id])
-  createdAt DateTime @default(now())
+// model Save {
+//   id        String   @id @default(uuid())
+//   userId    String
+//   pinId     String
+//   user      User     @relation(fields: [userId], references: [id])
+//   pin       Pin      @relation(fields: [pinId], references: [id])
+//   createdAt DateTime @default(now())
 
-  @@unique([userId, pinId])
-}
+//   @@unique([userId, pinId])
+// }
 
 model Tag {
   id        String   @id @default(uuid())

@@ -1,76 +1,45 @@
 import { prisma } from './prisma';
-import { Pin, User, Tag } from '@prisma/client';
+import { Pin } from '@prisma/client';
 
-// 返り値の型を定義
-type PinWithRelations = Pin & {
-  user: Pick<User, 'id' | 'name' | 'image'>;
-  tags: Tag[];
-  _count: {
-    likes: number;
-    saves: number;
-  };
-};
-
+// 返り値の型定義
 type GetPinsResult = {
-  pins: PinWithRelations[];
+  pins: Pin[];
   nextCursor: string | null;
 };
 
+// ピン一覧取得
 export async function getPins(options: {
   cursor?: string;
   limit?: number;
-  userId?: string;
-  tagId?: string;
 }): Promise<GetPinsResult> {
-  const { cursor, limit = 20, userId, tagId } = options;
-
-  const where = {
-    ...(userId && { userId }),
-    ...(tagId && {
-      tags: {
-        some: {
-          id: tagId
-        }
-      }
-    })
-  };
+  const { cursor, limit = 20 } = options;
 
   const pins = await prisma.pin.findMany({
-    take: limit,
+    take: limit + 1,
     ...(cursor && {
       skip: 1,
       cursor: {
         id: cursor,
       },
     }),
-    where,
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          image: true,
-        },
-      },
-      tags: true,
-      _count: {
-        select: {
-          likes: true,
-          saves: true,
-        },
-      },
-    },
     orderBy: {
       createdAt: 'desc',
     },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      imageUrl: true,
+      createdAt: true,
+      updatedAt: true,
+    },
   });
 
-  const nextCursor = pins[limit - 1]?.id;
-
-  console.log("pins")
-  console.log(pins)
-  console.log("nextCursor")
-  console.log(nextCursor)
+  let nextCursor: string | null = null;
+  if (pins.length > limit) {
+    const nextItem = pins.pop();
+    nextCursor = nextItem?.id ?? null;
+  }
 
   return {
     pins,
@@ -78,76 +47,47 @@ export async function getPins(options: {
   };
 }
 
-// createPinの返り値の型も定義
+// ピン作成
 export async function createPin(data: {
   title: string;
   description?: string;
   imageUrl: string;
-  userId: string;
-  tags?: string[];
-}): Promise<PinWithRelations> {
-  const { title, description, imageUrl, userId, tags = [] } = data;
+}): Promise<Pin> {
+  const { title, description, imageUrl } = data;
 
   return prisma.pin.create({
     data: {
       title,
       description,
       imageUrl,
-      userId,
-      tags: {
-        connectOrCreate: tags.map((tag) => ({
-          where: { name: tag },
-          create: { name: tag },
-        })),
-      },
-    },
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          image: true,
-        },
-      },
-      tags: true,
-      _count: {
-        select: {
-          likes: true,
-          saves: true,
-        },
-      },
     },
   });
 }
 
-type Like = {
-  id: string;
-  userId: string;
-  pinId: string;
-};
-
-export async function toggleLike(userId: string, pinId: string): Promise<Like> {
-  const existingLike = await prisma.like.findUnique({
-    where: {
-      userId_pinId: {
-        userId,
-        pinId,
-      },
-    },
+// ピン取得（単一）
+export async function getPin(id: string): Promise<Pin | null> {
+  return prisma.pin.findUnique({
+    where: { id },
   });
+}
 
-  if (existingLike) {
-    return prisma.like.delete({
-      where: {
-        id: existingLike.id,
-      },
-    });
+// ピン更新
+export async function updatePin(
+  id: string,
+  data: {
+    title?: string;
+    description?: string;
   }
+): Promise<Pin> {
+  return prisma.pin.update({
+    where: { id },
+    data,
+  });
+}
 
-  return prisma.like.create({
-    data: {
-      userId,
-      pinId,
-    },
+// ピン削除
+export async function deletePin(id: string): Promise<Pin> {
+  return prisma.pin.delete({
+    where: { id },
   });
 }

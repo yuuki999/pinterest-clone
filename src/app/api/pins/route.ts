@@ -3,100 +3,83 @@ import { getImageUrl } from '@/app/libs/s3';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const cursor = searchParams.get('cursor');
-  const limit = 20;
-
   try {
+    const { searchParams } = new URL(request.url);
+    const cursor = searchParams.get('cursor');
+    const limit = 20;
+
+    // クエリパラメータに基づいてページネーションを設定
     const pins = await prisma.pin.findMany({
-      take: limit,
-      ...(cursor && {
-        skip: 1,
-        cursor: {
-          id: cursor,
-        },
-      }),
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            image: true,
-          },
-        },
-        _count: {
-          select: {
-            likes: true,
-            saves: true,
-          },
-        },
-      },
+      take: limit + 1, // 次のページがあるかチェックするために1つ多く取得
       orderBy: {
-        createdAt: 'desc',
+        createdAt: 'desc'
       },
+      ...(cursor
+        ? {
+            skip: 1, // カーソルの位置のアイテムをスキップ
+            cursor: {
+              id: cursor,
+            },
+          }
+        : {}),
     });
 
-    // S3の署名付きURLを生成
-    const pinsWithSignedUrls = await Promise.all(
-      pins.map(async (pin) => {
-        try {
-          const key = pin.imageUrl.split('.com/').pop()!;
-          const signedUrl = await getImageUrl(key);
-          return {
-            ...pin,
-            imageUrl: signedUrl
-          };
-        } catch (error) {
-          console.error(`Error getting signed URL for pin ${pin.id}:`, error);
-          return pin;
-        }
-      })
-    );
+    let nextCursor: string | undefined = undefined;
 
-    const nextCursor = pins[limit - 1]?.id;
+    // 次のページが存在するかチェック
+    if (pins.length > limit) {
+      const nextItem = pins.pop(); // 余分に取得した1件を削除
+      nextCursor = nextItem?.id;    // 次のページのカーソルとして使用
+    }
+
+    // 署名付きURLの生成
+    const pinsWithSignedUrls = await Promise.all(
+      pins.map(async (pin) => ({
+        ...pin,
+        imageUrl: await getImageUrl(pin.imageUrl)
+      }))
+    );
 
     return NextResponse.json({
       pins: pinsWithSignedUrls,
       nextCursor,
     });
+
   } catch (error) {
     console.error('Error fetching pins:', error);
-    return NextResponse.json({ error: 'Error fetching pins' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to fetch pins' },
+      { status: 500 }
+    );
   }
 }
 
+// これがエラーになる。
 export async function POST(request: Request) {
   try {
-    const { title, description, imageUrl, userId } = await request.json();
+    // 1. リクエストボディの検証
+    const { title, description, imageUrl } = await request.json();
 
+    if (!title || !imageUrl) {
+      return NextResponse.json(
+        { error: 'Title and image URL are required' },
+        { status: 400 }
+      );
+    }
+
+    // 2. Pinの作成
     const pin = await prisma.pin.create({
       data: {
         title,
-        description,
-        imageUrl, // S3のキーを保存
-        userId,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            image: true,
-          },
-        },
-        tags: true,
-        _count: {
-          select: {
-            likes: true,
-            saves: true,
-          },
-        },
+        description: description || '',
+        imageUrl,
       },
     });
 
-    // 作成したPinの画像URLを署名付きURLに変換
+    // 3. 画像URLの署名付きURLへの変換
     const signedImageUrl = await getImageUrl(pin.imageUrl);
     
+    // 4. レスポンスの返却
     return NextResponse.json({
       ...pin,
       imageUrl: signedImageUrl
