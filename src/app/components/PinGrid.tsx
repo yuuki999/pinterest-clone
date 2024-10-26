@@ -23,11 +23,11 @@ export function PinGrid({ initialPins, initialCursor }: PinGridProps) {
 
   useEffect(() => {
     const loadMore = async () => {
-      console.log("Status Check:");
-      console.log("- inView:", inView);
-      console.log("- loading:", loading);
-      console.log("- cursor:", cursor);
-      console.log("- hasMore:", hasMore);
+      // console.log("Status Check:");
+      // console.log("- inView:", inView);
+      // console.log("- loading:", loading);
+      // console.log("- cursor:", cursor);
+      // console.log("- hasMore:", hasMore);
       
       if (inView && !loading && cursor && hasMore) {
         setLoading(true);

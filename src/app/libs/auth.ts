@@ -29,13 +29,13 @@ export const authOptions: NextAuthOptions = {
         })
 
         if (!user || !user.hashedPassword) {
-          throw new Error('ユーザーが見つかりません')
+          throw new Error('メールアドレスまたはパスワードが正しくありません')
         }
 
         const isValid = await compare(credentials.password, user.hashedPassword)
 
         if (!isValid) {
-          throw new Error('パスワードが正しくありません')
+          throw new Error('メールアドレスまたはパスワードが正しくありません')
         }
 
         return user

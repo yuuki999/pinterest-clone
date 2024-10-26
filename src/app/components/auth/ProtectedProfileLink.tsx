@@ -1,6 +1,6 @@
 'use client'
 
-import { useSession } from 'next-auth/react'
+import { signIn, useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { AuthModal } from './AuthModal'
@@ -23,18 +23,15 @@ export function ProtectedProfileLink({ href, children }: { href: string; childre
   }
 
   const handleLogin = async (data: { email: string; password: string }) => {
-    try {  
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+    try {
+      const result = await signIn('credentials', {
+        email: data.email,
+        password: data.password,
+        redirect: false,
       })
   
-      const result = await response.json()
-      if (!response.ok) {
-        throw new Error(result.error || 'ログインに失敗しました')
+      if (result?.error) {
+        throw new Error(result.error)
       }
   
       toast({
@@ -47,6 +44,7 @@ export function ProtectedProfileLink({ href, children }: { href: string; childre
       setIsAuthModalOpen(false)
       setTimeout(() => {
         router.push(href)
+        router.refresh()
       }, 100)
   
     } catch (error) {
