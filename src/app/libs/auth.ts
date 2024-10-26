@@ -5,6 +5,7 @@ import { PrismaAdapter } from '@auth/prisma-adapter'
 import { compare } from 'bcryptjs'
 import { prisma } from './prisma'
 
+// TODO: これのキャッチアップを使用。
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
@@ -42,10 +43,13 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   pages: {
-    signIn: '/',  // カスタムログインページのパス
+    signIn: '/',
+    signOut: '/',  // ログアウトページも追加
+    error: '/auth/error', // エラーページを追加
   },
   session: {
-    strategy: 'jwt'
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
     async session({ session, token }) {
@@ -54,11 +58,30 @@ export const authOptions: NextAuthOptions = {
       }
       return session
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.sub = user.id
       }
+      if (account) {
+        token.provider = account.provider
+      }
       return token
     }
-  }
+  },
+  events: {
+    async signOut({ session, token }) {
+      // ログアウト時の処理をここに追加できます
+      try {
+        await prisma.session.deleteMany({
+          where: {
+            userId: token.sub
+          }
+        })
+      } catch (error) {
+        console.error('Logout cleanup error:', error)
+      }
+    }
+  },
+  debug: process.env.NODE_ENV === 'development',
+  secret: process.env.NEXTAUTH_SECRET,
 }

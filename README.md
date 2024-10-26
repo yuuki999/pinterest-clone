@@ -9,7 +9,7 @@ npx prisma migrate reset
 ```
 npx prisma migrate dev --name remove_user_relation
 ```
-クライアントの再作成
+クライアントの再作成(これでprismaが使えるようになる、PC再起動したりしたら必要になるかも。)
 ```
 npx prisma generate
 ```
@@ -33,4 +33,10 @@ MUI: 大規模、styled-componentsを使う場合
 shadcnを使用して、下記を実行すると、自動的にコンポーネントが```src/components/ui/dialog.tsx```みたいなところに作成される。
 ```
 npx shadcn@latest add dialog
+```
+
+vscodeが重い時は
+```
+rm -rf node_modules
+rm -rf .next
 ```

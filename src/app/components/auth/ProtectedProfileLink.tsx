@@ -7,19 +7,14 @@ import { AuthModal } from './AuthModal'
 import { DropdownMenuItem } from '../shadcn/ui/dropdown-menu'
 import { useToast } from '@/app/hooks/shadcn/use-toast'
 
-interface ProtectedProfileLinkProps {
-  href: string
-  children: React.ReactNode
-}
-
-export function ProtectedProfileLink({ href, children }: ProtectedProfileLinkProps) {
+export function ProtectedProfileLink({ href, children }: { href: string; children: React.ReactNode }) {
   const { status } = useSession()
   const router = useRouter()
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const { toast } = useToast()
 
   const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault()  // イベントの伝播を止める
+    e.preventDefault()
     if (status === 'authenticated') {
       router.push(href)
     } else {
@@ -27,20 +22,14 @@ export function ProtectedProfileLink({ href, children }: ProtectedProfileLinkPro
     }
   }
 
-  // TODO: 新規登録処理と、ログイン処理のAPIを分ける。
-  const handleSubmit = async (data: { email: string; password: string }) => {
-    console.log("first")
+  const handleLogin = async (data: { email: string; password: string }) => {
     try {  
-      // ログイン処理
-      const response = await fetch('/api/auth/signup', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          email: data.email,
-          password: data.password,
-        }),
+        body: JSON.stringify(data),
       })
   
       const result = await response.json()
@@ -51,24 +40,57 @@ export function ProtectedProfileLink({ href, children }: ProtectedProfileLinkPro
       toast({
         title: "ログイン成功! 🎉",
         description: "ようこそ戻ってきました！",
-        variant: "default", // "default" | "destructive"
-        className: "bg-green-500 text-white", // カスタムスタイル
+        variant: "default",
+        className: "bg-green-500 text-white",
       })
   
-      // モーダルを閉じる
       setIsAuthModalOpen(false)
-
-      // 数秒後にページ遷移
       setTimeout(() => {
         router.push(href)
       }, 100)
   
     } catch (error) {
       console.error('Login error:', error)
+      toast({
+        title: "ログインエラー",
+        description: error instanceof Error ? error.message : "ログインに失敗しました",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleSignup = async (data: { email: string; password: string; birthdate: string }) => {
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      })
+
+      const result = await response.json()
+      if (!response.ok) {
+        throw new Error(result.error || '新規登録に失敗しました')
+      }
 
       toast({
-        title: "エラーが発生しました",
-        description: error instanceof Error ? error.message : "登録に失敗しました",
+        title: "登録成功! 🎉",
+        description: "Pinterestへようこそ！",
+        variant: "default",
+        className: "bg-green-500 text-white",
+      })
+
+      setIsAuthModalOpen(false)
+      setTimeout(() => {
+        router.push(href)
+      }, 100)
+
+    } catch (error) {
+      console.error('Signup error:', error)
+      toast({
+        title: "登録エラー",
+        description: error instanceof Error ? error.message : "新規登録に失敗しました",
         variant: "destructive",
       })
     }
@@ -83,7 +105,8 @@ export function ProtectedProfileLink({ href, children }: ProtectedProfileLinkPro
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
-        onSubmit={handleSubmit}
+        onLogin={handleLogin}
+        onSignup={handleSignup}
       />
     </>
   )
