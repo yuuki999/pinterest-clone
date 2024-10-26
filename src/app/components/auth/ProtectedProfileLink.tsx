@@ -5,13 +5,12 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { AuthModal } from './AuthModal'
 import { DropdownMenuItem } from '../shadcn/ui/dropdown-menu'
-import { useToast } from '@/app/hooks/shadcn/use-toast'
+import { ToastMessage } from '../ui/ToastMessage'
 
 export function ProtectedProfileLink({ href, children }: { href: string; children: React.ReactNode }) {
   const { status } = useSession()
   const router = useRouter()
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
-  const { toast } = useToast()
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -34,12 +33,10 @@ export function ProtectedProfileLink({ href, children }: { href: string; childre
         throw new Error(result.error)
       }
   
-      toast({
+      ToastMessage.success({
         title: "ログイン成功! 🎉",
         description: "ようこそ戻ってきました！",
-        variant: "default",
-        className: "bg-green-500 text-white",
-      })
+      });
   
       setIsAuthModalOpen(false)
       setTimeout(() => {
@@ -49,11 +46,11 @@ export function ProtectedProfileLink({ href, children }: { href: string; childre
   
     } catch (error) {
       console.error('Login error:', error)
-      toast({
-        title: "ログインエラー",
+  
+      ToastMessage.error({
+        title: "ログイン成功! 🎉",
         description: error instanceof Error ? error.message : "ログインに失敗しました",
-        variant: "destructive",
-      })
+      });
     }
   }
 
@@ -72,12 +69,10 @@ export function ProtectedProfileLink({ href, children }: { href: string; childre
         throw new Error(result.error || '新規登録に失敗しました')
       }
 
-      toast({
+      ToastMessage.success({
         title: "登録成功! 🎉",
         description: "Pinterestへようこそ！",
-        variant: "default",
-        className: "bg-green-500 text-white",
-      })
+      });
 
       setIsAuthModalOpen(false)
       setTimeout(() => {
@@ -86,11 +81,11 @@ export function ProtectedProfileLink({ href, children }: { href: string; childre
 
     } catch (error) {
       console.error('Signup error:', error)
-      toast({
+
+      ToastMessage.error({
         title: "登録エラー",
         description: error instanceof Error ? error.message : "新規登録に失敗しました",
-        variant: "destructive",
-      })
+      });
     }
   }
 

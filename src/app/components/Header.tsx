@@ -7,7 +7,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ProtectedProfileLink } from './auth/ProtectedProfileLink'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './shadcn/ui/dropdown-menu'
-import { toast } from '../hooks/shadcn/use-toast'
+import { ToastMessage } from './ui/ToastMessage'
 
 export function Header() {
   const router = useRouter()
@@ -58,12 +58,10 @@ export function Header() {
       })
 
       // 成功時のトースト表示
-      toast({
+      ToastMessage.success({
         title: "ログアウト成功",
         description: "またのご利用をお待ちしております！",
-        variant: "default",
-        className: "bg-green-500 text-white",
-      })
+      });
 
       // ログアウト後の処理
       router.push('/')
@@ -71,11 +69,10 @@ export function Header() {
 
     } catch (error) {
       console.error('Logout error:', error)
-      toast({
+      ToastMessage.error({
         title: "ログアウトエラー",
         description: error instanceof Error ? error.message : "ログアウトに失敗しました",
-        variant: "destructive",
-      })
+      });
     } finally {
       setIsLoggingOut(false)
     }
