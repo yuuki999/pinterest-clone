@@ -2,6 +2,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { Header } from './components/Header';
 import { Providers } from '@/providers';
+import { Toaster } from './components/shadcn/ui/toaster';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -23,6 +24,7 @@ export default function RootLayout({
           <main className="pt-16 min-h-screen bg-white">
             {children}
           </main>
+          <Toaster />
         </Providers>
       </body>
     </html>
