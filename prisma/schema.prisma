@@ -7,45 +7,87 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// model User {
-//   id        String   @id @default(uuid())
-//   email     String   @unique
-//   name      String?
-//   image     String?
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-//   pins      Pin[]    // Userが作成したPin
-//   likes     Like[]
-//   saves     Save[]
-// }
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  hashedPassword String?
+  // ユーザーに関連するもの
+  accounts      Account[]
+  sessions      Session[]
+  boards        Board[]
+  pins          Pin[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
 
-// SNS的な機能が必要な場合
-// model Pin {
-//   id          String   @id @default(uuid())
-//   title       String
-//   description String?
-//   imageUrl    String
-//   userId      String
-//   user        User     @relation(fields: [userId], references: [id])
-//   createdAt   DateTime @default(now())
-//   updatedAt   DateTime @updatedAt
-//   likes       Like[]
-//   saves       Save[]
-//   tags        Tag[]
-// }
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Pinterest固有のモデル
+model Board {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  isPrivate   Boolean  @default(false)
+  // ユーザーとの関連
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // ピンとの関連
+  pins        Pin[]
+  // タイムスタンプ
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  // インデックスを追加してパフォーマンスを向上
+  @@index([userId])
+}
 
 model Pin {
   id          String   @id @default(cuid())
   title       String
   description String?
   imageUrl    String
+  // ユーザーとの関連
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // ボードとの関連
+  boardId     String?
+  board       Board?   @relation(fields: [boardId], references: [id], onDelete: SetNull)
+  // タイムスタンプ
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  // likes       Like[]
-  // saves       Save[]
-  tags        Tag[]
+  // インデックスを追加
+  @@index([userId])
+  @@index([boardId])
 }
 
+// SNS的な機能が必要な場合
 // model Like {
 //   id        String   @id @default(uuid())
 //   userId    String
@@ -68,9 +110,23 @@ model Pin {
 //   @@unique([userId, pinId])
 // }
 
-model Tag {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  pins      Pin[]
-  createdAt DateTime @default(now())
-}
+// model Pin {
+//   id          String   @id @default(uuid())
+//   title       String
+//   description String?
+//   imageUrl    String
+//   userId      String
+//   user        User     @relation(fields: [userId], references: [id])
+//   createdAt   DateTime @default(now())
+//   updatedAt   DateTime @updatedAt
+//   likes       Like[]
+//   saves       Save[]
+//   tags        Tag[]
+// }
+
+// model Tag {
+//   id        String   @id @default(uuid())
+//   name      String   @unique
+//   pins      Pin[]
+//   createdAt DateTime @default(now())
+// }

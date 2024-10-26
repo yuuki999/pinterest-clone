@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, MessageCircle, Bookmark } from 'lucide-react';
 import { useInView } from 'react-intersection-observer';
-import { Pin } from '@/types/pin';
+import { Pin } from '@/app/types/pin';
 
 type PinGridProps = {
   initialPins: Pin[];
@@ -14,7 +14,7 @@ export function PinGrid({ initialPins, initialCursor }: PinGridProps) {
   const [pins, setPins] = useState<Pin[]>(initialPins);
   const [loading, setLoading] = useState(false);
   const [cursor, setCursor] = useState<string | null>(initialCursor);
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore, setHasMore] = useState(true); // 多分画面一番したに移動した時に無限スクロールする用の機能
   
   const { ref, inView } = useInView({
     threshold: 0,
