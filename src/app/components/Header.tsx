@@ -16,8 +16,6 @@ export function Header() {
   const [searchQuery, setSearchQuery] = useState('')
   const [isSearchFocused, setIsSearchFocused] = useState(false)
 
-  console.log("status: ", status)
-
   // 検索処理
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
