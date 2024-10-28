@@ -132,10 +132,15 @@ export default function ProfilePage() {
                 設定
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">
-                <LogOut className="w-4 h-4 mr-2" />
-                ログアウト
-              </DropdownMenuItem>
+              {status === 'authenticated' && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-destructive">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    ログアウト
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

@@ -52,7 +52,8 @@ export function Header() {
       
       // NextAuthのsignOut関数を呼び出し
       await signOut({ 
-        redirect: false 
+        redirect: true,
+        callbackUrl: '/' // リダイレクト先を指定
       })
 
       // 成功時のトースト表示
@@ -61,17 +62,13 @@ export function Header() {
         description: "またのご利用をお待ちしております！",
       });
 
-      // ログアウト後の処理
-      router.push('/')
-      router.refresh()
-
     } catch (error) {
       console.error('Logout error:', error)
       ToastMessage.error({
         title: "ログアウトエラー",
         description: error instanceof Error ? error.message : "ログアウトに失敗しました",
       });
-    } finally {
+
       setIsLoggingOut(false)
     }
   }
@@ -154,14 +151,18 @@ export function Header() {
               <ProtectedProfileLink href="/profile">
                 プロフィール
               </ProtectedProfileLink>
-              <DropdownMenuItem 
-                className="text-red-600"
-                onClick={handleSignOut}
-                disabled={isLoggingOut}
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                {isLoggingOut ? 'ログアウト中...' : 'ログアウト'}
-              </DropdownMenuItem>
+              {status === 'authenticated' && (
+                <>
+                  <DropdownMenuItem 
+                    className="text-red-600"
+                    onClick={handleSignOut}
+                    disabled={isLoggingOut}
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    {isLoggingOut ? 'ログアウト中...' : 'ログアウト'}
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
