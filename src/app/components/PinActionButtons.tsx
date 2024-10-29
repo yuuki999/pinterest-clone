@@ -5,16 +5,26 @@ interface PinActionButtonsProps {
   onSave: (e: React.MouseEvent) => void;
   onShare: (e: React.MouseEvent) => void;
   onMore: (e: React.MouseEvent) => void;
+  isSaved?: boolean;  // オプショナル
 }
 
-export const PinActionButtons = ({ onSave, onShare, onMore }: PinActionButtonsProps) => (
+export const PinActionButtons = ({ 
+  onSave, 
+  onShare, 
+  onMore, 
+  isSaved = false 
+}: PinActionButtonsProps) => (
   <>
     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
       <Button 
         onClick={onSave}
-        className="bg-red-500 hover:bg-red-600 text-white rounded-full px-4"
+        className={`${
+          isSaved 
+            ? 'bg-gray-700 hover:bg-gray-800' 
+            : 'bg-red-500 hover:bg-red-600'
+        } text-white rounded-full px-4`}
       >
-        保存
+        {isSaved ? '保存済み' : '保存'}
       </Button>
     </div>
 

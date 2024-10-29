@@ -7,14 +7,29 @@ import { PinActionButtons } from "./PinActionButtons";
 interface PinCardProps {
   pin: Pin;
   isLoaded: boolean;
+  showTitle?: boolean; // 保存済みピン一覧で使用する場合にタイトルを表示するためのオプション
+  isSaved?: boolean;   // ピンが保存済みかどうかを示すフラグ
+  onSaveToggle?: () => void; // 保存/保存解除時のカスタムハンドラ（オプション）
 }
 
-export const PinCard = ({ pin, isLoaded }: PinCardProps) => {
+export const PinCard = ({ 
+  pin, 
+  isLoaded, 
+  showTitle = false,
+  isSaved = false,
+  onSaveToggle 
+}: PinCardProps) => {
   const { handleSave } = usePinSave(pin.id);
 
   if (!isLoaded) {
     return <PinCardSkeleton />;
   }
+
+  const handleSaveClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    await handleSave();
+    onSaveToggle?.();
+  };
 
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -39,10 +54,20 @@ export const PinCard = ({ pin, isLoaded }: PinCardProps) => {
         />
 
         <PinActionButtons
-          onSave={handleSave}
+          onSave={handleSaveClick}
           onShare={handleShare}
           onMore={handleMore}
+          isSaved={isSaved}
         />
+
+        {showTitle && (
+          <div className="absolute bottom-0 left-0 right-0 p-4 text-white z-10">
+            <h3 className="font-semibold text-lg">{pin.title}</h3>
+            {pin.description && (
+              <p className="text-sm opacity-90">{pin.description}</p>
+            )}
+          </div>
+        )}
       </div>
     </Card>
   );

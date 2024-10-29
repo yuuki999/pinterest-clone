@@ -15,12 +15,29 @@ import {
 } from '@/app/components/shadcn/ui/hover-card';
 import { Skeleton } from '@/app/components/shadcn/ui/skeleton';
 import ProfileAvatar from './ProfileAvatar';
+import { User } from '@/app/types/user';
+import { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { PinCard } from '@/app/components/PinCard';
+import { PinCardSkeleton } from '@/app/components/PinCardSkeleton';
 
 type Board = {
   id: number;
   title: string;
   pinCount: number;
   imageUrl: string;
+};
+
+type SavedPin = {
+  id: string;
+  title: string;
+  description: string | null;
+  imageUrl: string;
+  savedAt: string;
+  user: {
+    name: string | null;
+    image: string | null;
+  };
 };
 
 const boards: Board[] = [
@@ -80,7 +97,7 @@ const CreateBoardCard = () => (
 );
 
 // ユーザー名を生成する関数
-const generateDisplayName = (user: any) => {
+const generateDisplayName = (user: User) => {
   if (user?.name) return user.name;
   if (user?.email) {
     return user.email.split('@')[0].replace(/\./g, '');
@@ -89,16 +106,42 @@ const generateDisplayName = (user: any) => {
 };
 
 // ハンドルネームを生成する関数
-const generateHandle = (user: any) => {
+const generateHandle = (user: User) => {
   if (user?.email) {
     return user.email.split('@')[0].replace(/\./g, '');
   }
   return 'unknown';
 };
 
+// 画像プリフェッチ関数を追加
+const preloadImages = (pins: SavedPin[]) => {
+  return Promise.all(
+    pins.map(
+      (pin) =>
+        new Promise((resolve, reject) => {
+          const img = new Image();
+          img.src = pin.imageUrl;
+          img.onload = resolve;
+          img.onerror = reject;
+        })
+    )
+  );
+};
+
 export default function ProfilePage() {
+  const [savedPins, setSavedPins] = useState<SavedPin[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [, setImagesPreloaded] = useState(false);
   const { data: session, status } = useSession();
   const router = useRouter();
+
+  // タブが切り替わったときにデータを取得
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetchSavedPins();
+    }
+  }, [status]);
 
   const handleEditProfile = () => {
     router.push('/profile/edit');
@@ -112,12 +155,39 @@ export default function ProfilePage() {
     redirect('/');
   }
 
-  const displayName = generateDisplayName(session?.user);
+  // 保存したピンを取得する関数を更新
+  const fetchSavedPins = async () => {
+    setIsLoading(true);
+    setError(null);
+    setImagesPreloaded(false);
+    try {
+      const response = await fetch('/api/user/profile/saved-pins');
+      if (!response.ok) {
+        throw new Error('Failed to fetch saved pins');
+      }
+      const data = await response.json();
+      setSavedPins(data.pins);
+      
+      // 画像のプリロード
+      await preloadImages(data.pins);
+      setImagesPreloaded(true);
+    } catch (err) {
+      setError('Failed to load saved pins');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const displayName = generateDisplayName(session?.user); // TODO: nullを許可する、nullの場合はUnknown Userを返す
   const handle = generateHandle(session?.user);
 
   // AvatarFallbackの表示用に頭文字を取得
   const initials = displayName.slice(0, 2).toUpperCase();
 
+
+  // TODO: 保存済みの部分を別コンポーネントを作成して分離する
+  // TODO: 画像のサイズを調整する。プリフェッチする必要がある。
   return (
     <main className="container mx-auto pt-20 px-4">
       {/* Profile Header */}
@@ -166,6 +236,7 @@ export default function ProfilePage() {
             保存済み
           </TabsTrigger>
         </TabsList>
+        {/* ここは自分が投稿したピンが表示される。 */}
         <TabsContent value="created" className="mt-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <CreateBoardCard />
@@ -174,10 +245,40 @@ export default function ProfilePage() {
             ))}
           </div>
         </TabsContent>
-        <TabsContent value="saved">
-          <div className="text-center text-muted-foreground py-8">
-            保存したピンはまだありません
-          </div>
+        {/* カテゴリみたいなやつをつけて保存するとまとまる機能がある。pintarestだと */}
+        {/* 全てのピンが一番左上に表示される */}
+        <TabsContent value="saved" className="mt-12">
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {[...Array(8)].map((_, index) => (
+                <PinCardSkeleton key={index} />
+              ))}
+            </div>
+          ) : error ? (
+            <div className="text-center text-red-500 py-8">
+              {error}
+            </div>
+          ) : savedPins.length === 0 ? (
+            <div className="text-center text-muted-foreground py-8">
+              保存したピンはまだありません
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {savedPins.map((pin) => (
+                <PinCard
+                  key={pin.id}
+                  pin={pin}
+                  isLoaded={true}
+                  showTitle={true}
+                  isSaved={true}
+                  onSaveToggle={() => {
+                    // 保存解除時にリストを更新
+                    fetchSavedPins();
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </main>
