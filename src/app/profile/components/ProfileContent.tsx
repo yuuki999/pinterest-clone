@@ -2,18 +2,11 @@
 
 import React from 'react';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { redirect } from 'next/navigation';
-import { Share2, MoreHorizontal, Plus, Settings, LogOut } from 'lucide-react';
-
+import { Share2, Plus, Pencil } from 'lucide-react';
 import { Button } from '@/app/components/shadcn/ui/button';
 import { Card, CardContent } from '@/app/components/shadcn/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/app/components/shadcn/ui/dropdown-menu';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/app/components/shadcn/ui/tabs';
 import { Avatar, AvatarImage, AvatarFallback } from '@/app/components/shadcn/ui/avatar';
 import {
@@ -22,6 +15,7 @@ import {
   HoverCardTrigger,
 } from '@/app/components/shadcn/ui/hover-card';
 import { Skeleton } from '@/app/components/shadcn/ui/skeleton';
+import ProfileAvatar from './ProfileAvatar';
 
 type Board = {
   id: number;
@@ -86,8 +80,30 @@ const CreateBoardCard = () => (
   </Card>
 );
 
+// ユーザー名を生成する関数
+const generateDisplayName = (user: any) => {
+  if (user?.name) return user.name;
+  if (user?.email) {
+    return user.email.split('@')[0].replace(/\./g, '');
+  }
+  return 'Unknown User';
+};
+
+// ハンドルネームを生成する関数
+const generateHandle = (user: any) => {
+  if (user?.email) {
+    return user.email.split('@')[0].replace(/\./g, '');
+  }
+  return 'unknown';
+};
+
 export default function ProfilePage() {
   const { data: session, status } = useSession();
+  const router = useRouter();
+
+  const handleEditProfile = () => {
+    router.push('/profile/edit');
+  };
 
   if (status === 'loading') {
     return <ProfileSkeleton />;
@@ -97,52 +113,47 @@ export default function ProfilePage() {
     redirect('/');
   }
 
+  const displayName = generateDisplayName(session?.user);
+  const handle = generateHandle(session?.user);
+
+  // AvatarFallbackの表示用に頭文字を取得
+  const initials = displayName.slice(0, 2).toUpperCase();
+
   return (
     <main className="container mx-auto pt-20 px-4">
       {/* Profile Header */}
       <div className="flex flex-col items-center space-y-6 mb-8">
-        <Avatar className="w-32 h-32 ring-4 ring-primary/20">
-          <AvatarImage src={session?.user?.image || "/api/placeholder/128/128"} />
-          <AvatarFallback>WY</AvatarFallback>
-        </Avatar>
+        <ProfileAvatar
+          imageKey={session?.user?.image}
+          fallback={initials}
+          className="w-32 h-32 ring-4 ring-primary/20"
+        />
 
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">Work Yuuki</h1>
-          <p className="text-muted-foreground">@workyuukiitoi</p>
+          <h1 className="text-3xl font-bold">{displayName}</h1>
+          <p className="text-muted-foreground">@{handle}</p>
           <p className="text-sm text-muted-foreground">
             0 フォロワー • 5 フォロー中
           </p>
         </div>
 
         <div className="flex items-center space-x-2">
-          <Button variant="default" size="sm" className="bg-primary hover:bg-primary/90">
+          {/* 編集ボタン */}
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handleEditProfile}
+            className="bg-primary hover:bg-primary/90"
+          >
+            <Pencil className="w-4 h-4 mr-2" />
+            プロフィールを編集
+          </Button>
+
+          {/* 共有ボタン */}
+          <Button variant="outline" size="sm">
             <Share2 className="w-4 h-4 mr-2" />
             共有
           </Button>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="hover:border-primary/50">
-                <MoreHorizontal className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem>
-                <Settings className="w-4 h-4 mr-2" />
-                設定
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              {status === 'authenticated' && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-destructive">
-                    <LogOut className="w-4 h-4 mr-2" />
-                    ログアウト
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
 

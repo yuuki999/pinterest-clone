@@ -54,16 +54,54 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async session({ session, token }) {
       if (token.sub && session.user) {
-        session.user.id = token.sub
+        // 最新のユーザー情報を取得
+        const user = await prisma.user.findUnique({
+          where: { id: token.sub },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+          }
+        });
+
+        if (user) {
+          session.user = {
+            ...session.user,
+            ...user,
+            id: token.sub
+          }
+        }
       }
       return session
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, trigger, session }) {
+      if (trigger === "update" && session) {
+        // セッション更新時の処理
+        const updatedUser = await prisma.user.findUnique({
+          where: { id: token.sub },
+          select: {
+            name: true,
+            email: true,
+            image: true,
+          }
+        });
+        
+        if (updatedUser) {
+          token = {
+            ...token,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            picture: updatedUser.image,
+          }
+        }
+      }
+      
       if (user) {
         token.sub = user.id
       }
-      if (account) {
-        token.provider = account.provider
+      if (session) {
+        token.provider = session.provider
       }
       return token
     }

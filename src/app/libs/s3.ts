@@ -1,7 +1,7 @@
 import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
-const s3Client = new S3Client({
+export const s3Client = new S3Client({
   region: process.env.AWS_REGION!,
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
@@ -30,6 +30,7 @@ export async function generatePresignedUrl(key: string, contentType: string) {
   }
 }
 
+// 1時間有効な署名付きURLを取得
 export async function getImageUrl(key: string) {
   const command = new GetObjectCommand({
     Bucket: process.env.AWS_BUCKET_NAME!,
@@ -37,7 +38,6 @@ export async function getImageUrl(key: string) {
   });
 
   try {
-    // 1時間有効な署名付きURL
     const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
     return signedUrl;
   } catch (error) {
