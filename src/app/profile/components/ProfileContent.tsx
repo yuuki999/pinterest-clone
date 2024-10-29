@@ -8,7 +8,6 @@ import { Share2, Plus, Pencil } from 'lucide-react';
 import { Button } from '@/app/components/shadcn/ui/button';
 import { Card, CardContent } from '@/app/components/shadcn/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/app/components/shadcn/ui/tabs';
-import { Avatar, AvatarImage, AvatarFallback } from '@/app/components/shadcn/ui/avatar';
 import {
   HoverCard,
   HoverCardContent,
@@ -25,9 +24,9 @@ type Board = {
 };
 
 const boards: Board[] = [
-  { id: 1, title: "DIYアイデア", pinCount: 128, imageUrl: "/api/placeholder/300/200" },
-  { id: 2, title: "インテリア", pinCount: 85, imageUrl: "/api/placeholder/300/200" },
-  { id: 3, title: "レシピ", pinCount: 246, imageUrl: "/api/placeholder/300/200" }
+  { id: 1, title: "DIYアイデア", pinCount: 128, imageUrl: "" },
+  { id: 2, title: "インテリア", pinCount: 85, imageUrl: "" },
+  { id: 3, title: "レシピ", pinCount: 246, imageUrl: "" }
 ];
 
 const ProfileSkeleton = () => (

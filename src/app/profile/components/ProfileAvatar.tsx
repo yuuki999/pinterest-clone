@@ -1,8 +1,8 @@
-
+"use client"
 
 import React, { useEffect, useState } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/app/components/shadcn/ui/avatar';
-import { getProfileImageUrl } from '@/app/libs/s3';
+import { Skeleton } from '@/app/components/shadcn/ui/skeleton';
 
 const ProfileAvatar = ({ 
   imageKey, 
@@ -14,14 +14,33 @@ const ProfileAvatar = ({
   className?: string;
 }) => {
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSignedUrl = async () => {
+    const preloadImage = (url: string): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.src = url;
+        img.onload = () => {
+          resolve();
+        };
+        img.onerror = () => {
+          reject();
+        };
+      });
+    };
+
+    const fetchAndPreloadImage = async () => {
+      setIsLoading(true);
+      
       if (imageKey) {
         try {
           // S3のキーを抽出
           const key = imageKey.split('.com/')[1];
-          if (!key) return;
+          if (!key) {
+            setIsLoading(false);
+            return;
+          }
           
           // APIを呼び出して署名付きURLを取得
           const response = await fetch(`/api/user/profile/image?key=${encodeURIComponent(key)}`);
@@ -31,20 +50,33 @@ const ProfileAvatar = ({
           }
 
           const data = await response.json();
+          
+          // 画像をプリロード
+          await preloadImage(data.url);
+          
+          // プリロード完了後にURLをセット
           setSignedUrl(data.url);
+          setIsLoading(false);
         } catch (error) {
-          console.error('Error fetching signed URL:', error);
+          console.error('Error loading image:', error);
+          setIsLoading(false);
         }
+      } else {
+        setIsLoading(false);
       }
     };
 
-    fetchSignedUrl();
+    fetchAndPreloadImage();
   }, [imageKey]);
+
+  if (isLoading) {
+    return <Skeleton className={`${className} rounded-full`} />;
+  }
 
   return (
     <Avatar className={className}>
       <AvatarImage 
-        src={signedUrl || "/api/placeholder/128/128"} 
+        src={signedUrl || ""} 
         alt="Profile"
       />
       <AvatarFallback>{fallback}</AvatarFallback>
