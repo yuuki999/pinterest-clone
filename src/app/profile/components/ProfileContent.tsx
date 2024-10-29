@@ -76,11 +76,11 @@ const BoardCard = ({ board }: { board: Board }) => (
 );
 
 const CreateBoardCard = () => (
-  <Card className="cursor-pointer hover:bg-accent transition-colors">
+  <Card className="cursor-pointer hover:bg-primary/10 transition-colors border-2 border-dashed">
     <CardContent className="aspect-[4/3] flex items-center justify-center">
       <div className="text-center space-y-2">
-        <Plus className="w-8 h-8 mx-auto text-muted-foreground" />
-        <span className="font-semibold text-muted-foreground">ボードを作成</span>
+        <Plus className="w-8 h-8 mx-auto text-primary" />
+        <span className="font-semibold text-primary">ボードを作成</span>
       </div>
     </CardContent>
   </Card>
@@ -101,7 +101,7 @@ export default function ProfilePage() {
     <main className="container mx-auto pt-20 px-4">
       {/* Profile Header */}
       <div className="flex flex-col items-center space-y-6 mb-8">
-        <Avatar className="w-32 h-32">
+        <Avatar className="w-32 h-32 ring-4 ring-primary/20">
           <AvatarImage src={session?.user?.image || "/api/placeholder/128/128"} />
           <AvatarFallback>WY</AvatarFallback>
         </Avatar>
@@ -115,14 +115,14 @@ export default function ProfilePage() {
         </div>
 
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm">
+          <Button variant="default" size="sm" className="bg-primary hover:bg-primary/90">
             <Share2 className="w-4 h-4 mr-2" />
             共有
           </Button>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" className="hover:border-primary/50">
                 <MoreHorizontal className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -149,8 +149,12 @@ export default function ProfilePage() {
       {/* Tabs Navigation */}
       <Tabs defaultValue="created" className="mb-8">
         <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
-          <TabsTrigger value="created">作成済み</TabsTrigger>
-          <TabsTrigger value="saved">保存済み</TabsTrigger>
+          <TabsTrigger value="created" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            作成済み
+          </TabsTrigger>
+          <TabsTrigger value="saved" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            保存済み
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="created" className="mt-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">

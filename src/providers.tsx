@@ -1,11 +1,24 @@
 'use client'
 
+import { ThemeProvider as NextThemesProvider } from 'next-themes'
 import { SessionProvider } from 'next-auth/react'
+import { type ThemeProviderProps } from "next-themes/dist/types"
 
-export function Providers({ children }: { children: React.ReactNode }) {
+interface ProvidersProps extends ThemeProviderProps {
+  children: React.ReactNode;
+}
+
+export function Providers({ children, ...props }: ProvidersProps) {
   return (
-    <SessionProvider>
-      {children}
-    </SessionProvider>
+    <NextThemesProvider
+      attribute="class"
+      defaultTheme="dark"
+      enableSystem={true}
+      {...props}
+    >
+      <SessionProvider>
+        {children}
+      </SessionProvider>
+    </NextThemesProvider>
   )
 }

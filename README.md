@@ -40,3 +40,6 @@ vscodeが重い時は
 rm -rf node_modules
 rm -rf .next
 ```
+
+memo:
+tailwind.config.tsを使ってテーマをダークモードにしたりできる。

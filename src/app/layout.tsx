@@ -21,7 +21,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <Providers>
           <Header />
-          <main className="pt-16 min-h-screen bg-white">
+          <main className="pt-16 min-h-screen bg-background">
             {children}
           </main>
           <Toaster />
