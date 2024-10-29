@@ -21,6 +21,10 @@ model User {
   boards        Board[]
   pins          Pin[]
   comments      Comment[]
+  likes          Like[]
+  saves          Save[]
+  followers      Follow[]  @relation("Followers")
+  following      Follow[]  @relation("Following")
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -80,6 +84,8 @@ model Pin {
   boardId     String?
   board       Board?    @relation(fields: [boardId], references: [id], onDelete: SetNull)
   comments    Comment[]
+  likes       Like[]
+  saves       Save[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -87,6 +93,7 @@ model Pin {
   @@index([boardId])
 }
 
+// これもまだ実装できていない。
 model Comment {
   id        String   @id @default(cuid())
   text      String
@@ -101,46 +108,45 @@ model Comment {
   @@index([userId])
 }
 
-// SNS的な機能が必要な場合
-// model Like {
-//   id        String   @id @default(uuid())
-//   userId    String
-//   pinId     String
-//   user      User     @relation(fields: [userId], references: [id])
-//   pin       Pin      @relation(fields: [pinId], references: [id])
-//   createdAt DateTime @default(now())
+// いいね機能のためのモデル
+model Like {
+  id        String   @id @default(cuid()) /// @db.Comment('いいねの一意識別子')
+  userId    String                        /// @db.Comment('いいねを行ったユーザーの外部キー')
+  pinId     String                        /// @db.Comment('いいねされたピンの外部キー')
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pin       Pin      @relation(fields: [pinId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 
-//   @@unique([userId, pinId])
-// }
+  @@unique([userId, pinId])
+  @@index([userId])
+  @@index([pinId])
+}
 
-// model Save {
-//   id        String   @id @default(uuid())
-//   userId    String
-//   pinId     String
-//   user      User     @relation(fields: [userId], references: [id])
-//   pin       Pin      @relation(fields: [pinId], references: [id])
-//   createdAt DateTime @default(now())
+// 保存機能のためのモデル
+model Save {
+  id        String   @id @default(cuid()) /// @db.Comment('保存（ブックマーク）の一意識別子')
+  userId    String                        /// @db.Comment('ピンを保存したユーザーの外部キー')
+  pinId     String                        /// @db.Comment('保存されたピンの外部キー')
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pin       Pin      @relation(fields: [pinId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 
-//   @@unique([userId, pinId])
-// }
+  @@unique([userId, pinId])
+  @@index([userId])
+  @@index([pinId])
+}
 
-// model Pin {
-//   id          String   @id @default(uuid())
-//   title       String
-//   description String?
-//   imageUrl    String
-//   userId      String
-//   user        User     @relation(fields: [userId], references: [id])
-//   createdAt   DateTime @default(now())
-//   updatedAt   DateTime @updatedAt
-//   likes       Like[]
-//   saves       Save[]
-//   tags        Tag[]
-// }
+// フォロー機能のためのモデル(中間テーブル)
+model Follow {
+  id          String   @id @default(cuid()) /// @db.Comment('フォロー関係の一意識別子')
+  followerId  String                        /// @db.Comment('フォローを実行したユーザー（フォロワー）のID')
+  followingId String                        /// @db.Comment('フォローされているユーザーのID')
+  follower    User     @relation("Followers", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
 
-// model Tag {
-//   id        String   @id @default(uuid())
-//   name      String   @unique
-//   pins      Pin[]
-//   createdAt DateTime @default(now())
-// }
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
