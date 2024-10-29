@@ -8,7 +8,6 @@ import { Button } from '@/app/components/shadcn/ui/button';
 import { Card, CardContent, CardHeader } from '@/app/components/shadcn/ui/card';
 import { Input } from '@/app/components/shadcn/ui/input';
 import { Label } from '@/app/components/shadcn/ui/label';
-import { Avatar, AvatarFallback, AvatarImage } from '@/app/components/shadcn/ui/avatar';
 import { useForm } from 'react-hook-form';
 import * as z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -21,6 +20,7 @@ import {
   FormMessage,
 } from "@/app/components/shadcn/ui/form";
 import { ToastMessage } from '@/app/components/ui/ToastMessage';
+import ProfileAvatar from '../../components/ProfileAvatar';
 
 const profileFormSchema = z.object({
   name: z
@@ -135,15 +135,23 @@ export default function ProfileEditPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center space-x-4">
-                <Avatar className="w-20 h-20">
-                  <AvatarImage 
-                    src={imagePreview || session?.user?.image || ''} 
-                    className="object-cover"
+                {imagePreview ? (
+                  // プレビュー用の通常のAvatarコンポーネント
+                  <div className="w-20 h-20 rounded-full overflow-hidden">
+                    <img 
+                      src={imagePreview} 
+                      alt="Preview" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  // S3から画像を取得するProfileAvatarコンポーネント
+                  <ProfileAvatar
+                    imageKey={session?.user?.image}
+                    fallback={session?.user?.name?.charAt(0)?.toUpperCase() || '?'}
+                    className="w-20 h-20"
                   />
-                  <AvatarFallback>
-                    {session?.user?.name?.charAt(0)?.toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                )}
                 <div>
                   <input
                     type="file"
