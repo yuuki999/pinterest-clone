@@ -56,6 +56,7 @@ export async function GET(request: Request) {
   }
 }
 
+// TODO: この辺変わったからテストした方がいいかも
 export async function POST(request: Request) {
   try {
     // セッションからユーザー情報を取得
@@ -78,7 +79,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // ユーザーを取得または作成
+    // 画像パスの正規化
+    const normalizedImageUrl = normalizeImagePath(body.imageUrl);
+
+    // ユーザーを取得
     const user = await prisma.user.findUnique({
       where: {
         email: session.user.email
@@ -92,21 +96,30 @@ export async function POST(request: Request) {
       );
     }
 
-    // Pinの作成（ユーザーとの関連付けあり）
+    // Pinの作成
     const pin = await prisma.pin.create({
       data: {
         title: body.title,
         description: body.description || '',
-        imageUrl: body.imageUrl,
+        imageUrl: normalizedImageUrl, // 正規化されたパスを使用
         user: {
           connect: {
             id: user.id
           }
-        }
+        },
+        // ボードIDが指定されている場合は関連付け
+        ...(body.boardId && {
+          board: {
+            connect: {
+              id: body.boardId
+            }
+          }
+        })
       },
       include: {
         user: {
           select: {
+            id: true,
             name: true,
             image: true
           }
@@ -114,12 +127,26 @@ export async function POST(request: Request) {
       }
     });
 
-    // 署名付きURLの生成
-    const signedImageUrl = await getImageUrl(pin.imageUrl);
+    // 開発環境と本番環境で異なる画像URLの処理
+    let displayImageUrl = normalizedImageUrl;
+    if (process.env.NODE_ENV === 'production') {
+      // 本番環境では署名付きURLを生成
+      try {
+        displayImageUrl = await getImageUrl(normalizedImageUrl);
+      } catch (error) {
+        console.error('Error generating signed URL:', error);
+        // エラーが発生しても元のURLを使用
+      }
+    } else {
+      // 開発環境では相対パスを使用
+      displayImageUrl = normalizedImageUrl.startsWith('/')
+        ? normalizedImageUrl
+        : `/${normalizedImageUrl}`;
+    }
     
     return NextResponse.json({
       ...pin,
-      imageUrl: signedImageUrl
+      imageUrl: displayImageUrl
     });
   } catch (error) {
     console.error('Error creating pin:', error);
@@ -128,4 +155,24 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+}
+
+// 画像パスを正規化する関数
+function normalizeImagePath(imageUrl: string): string {
+  // すでに完全なURLの場合はそのまま返す
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+
+  // uploadsディレクトリのパスの場合
+  if (imageUrl.startsWith('uploads/')) {
+    return `/${imageUrl}`;
+  }
+
+  // スラッシュで始まっていない場合は追加
+  if (!imageUrl.startsWith('/')) {
+    return `/uploads/${imageUrl}`;
+  }
+
+  return imageUrl;
 }

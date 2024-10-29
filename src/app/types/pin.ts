@@ -1,8 +1,11 @@
-export type Pin = {
+import { User } from "./user";
+
+export interface Pin {
   id: string;
   title: string;
-  description: string | null;
+  description: string | null | undefined;
   imageUrl: string;
+  user: User;
   createdAt: Date;
-  updatedAt: Date;
-};
+  comments: Comment[];
+}

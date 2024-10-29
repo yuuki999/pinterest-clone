@@ -1,6 +1,10 @@
 import { prisma } from './prisma';
 import { Pin } from '@prisma/client';
 
+
+// TODO: いろんな定義が入っているのでリファクタしたい。
+
+
 // 返り値の型定義
 type GetPinsResult = {
   pins: Pin[];

@@ -20,6 +20,7 @@ model User {
   sessions      Session[]
   boards        Board[]
   pins          Pin[]
+  comments      Comment[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -70,22 +71,34 @@ model Board {
 }
 
 model Pin {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   title       String
   description String?
   imageUrl    String
-  // ユーザーとの関連
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  // ボードとの関連
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   boardId     String?
-  board       Board?   @relation(fields: [boardId], references: [id], onDelete: SetNull)
-  // タイムスタンプ
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  // インデックスを追加
+  board       Board?    @relation(fields: [boardId], references: [id], onDelete: SetNull)
+  comments    Comment[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
   @@index([userId])
   @@index([boardId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  text      String
+  pinId     String
+  userId    String
+  pin       Pin      @relation(fields: [pinId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([pinId])
+  @@index([userId])
 }
 
 // SNS的な機能が必要な場合
