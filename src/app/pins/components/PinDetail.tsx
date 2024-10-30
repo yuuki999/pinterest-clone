@@ -6,18 +6,22 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/app/components/shadcn/ui/
 import { Button } from '@/app/components/shadcn/ui/button';
 import { Heart, Share2, Download } from 'lucide-react';
 import { Pin } from '@/app/types/pin';
+import { useSession } from 'next-auth/react';
+import { FollowButton } from '@/app/components/follow/FollowButton';
 
 interface PinDetailProps {
   pin: Pin;
+  initialIsFollowing: boolean; // すでにフォローしているかどうか
 }
 
-export function PinDetail({ pin }: PinDetailProps) {
+export function PinDetail({ pin, initialIsFollowing }: PinDetailProps) {
   const [comment, setComment] = useState('');
   const [imageRatio, setImageRatio] = useState(1);
   const [containerHeight, setContainerHeight] = useState('auto');
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const imageContainerRef = useRef<HTMLDivElement>(null);
+  const { data: session } = useSession();
 
   // 画像を取得する。
   useEffect(() => {
@@ -131,11 +135,18 @@ export function PinDetail({ pin }: PinDetailProps) {
             <AvatarImage src={pin.user.image} />
             <AvatarFallback>{pin.user.name?.[0]}</AvatarFallback>
           </Avatar>
-          <div>
-            <p className="font-semibold">{pin.user.name}</p>
-            <p className="text-sm text-gray-500">
-              {new Date(pin.createdAt).toLocaleDateString()}
-            </p>
+          <div className="flex items-center flex-1">
+            <div>
+              <p className="font-semibold">{pin.user.name}</p>
+              <p className="text-sm text-gray-500">
+                {new Date(pin.createdAt).toLocaleDateString()}
+              </p>
+            </div>
+            <FollowButton
+              targetUserId={pin.user.id}
+              currentUserId={session?.user?.id}
+              initialIsFollowing={initialIsFollowing}
+            />
           </div>
         </div>
 
