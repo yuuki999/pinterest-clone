@@ -7,7 +7,6 @@ import { Share2, Pencil } from 'lucide-react';
 import { Button } from '@/app/components/shadcn/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/app/components/shadcn/ui/tabs';
 import ProfileAvatar from './ProfileAvatar';
-import { useEffect, useState } from 'react';
 import { CreatedContent } from './created/CreatedContent';
 import { SavedContent } from './saved/SavedContent';
 import { Skeleton } from '@/app/components/shadcn/ui/skeleton';
@@ -16,27 +15,6 @@ import { ProfileStats } from './ProfileStats';
 export default function ProfilePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [followStats, setFollowStats] = useState({
-    followersCount: 0,
-    followingCount: 0
-  });
-
-  useEffect(() => {
-    const fetchFollowStats = async () => {
-      if (!session?.user?.id) return;
-      try {
-        const response = await fetch(`/api/users/${session.user.id}/stats`);
-        const data = await response.json();
-        setFollowStats(data);
-      } catch (error) {
-        console.error('Failed to fetch follow stats:', error);
-      }
-    };
-
-    if (status === 'authenticated') {
-      fetchFollowStats();
-    }
-  }, [session?.user?.id, status]);
 
   if (status === 'loading') {
     return <ProfileSkeleton />;
@@ -68,8 +46,6 @@ export default function ProfilePage() {
           userId={session?.user?.id}
           displayName={displayName}
           handle={handle}
-          initialStats={followStats}
-          onStatsUpdate={setFollowStats}
         />
 
         <div className="flex items-center space-x-2">
