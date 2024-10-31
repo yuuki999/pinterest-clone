@@ -27,7 +27,6 @@ interface Pin {
   };
 }
 
-
 // TODO: 一覧画面からピンを保存するときに、ボードを選択できるようにして、ボードで保存したらそのボードにピンを表示する。
 function BoardSkeleton() {
   return (

@@ -6,6 +6,9 @@ import { usePinLoader } from '../hooks/usePinLoader';
 import { Pin } from '../types/pin';
 import { PinCard } from './PinCard';
 import { PinCardSkeleton } from './PinCardSkeleton';
+import { useEffect } from 'react';
+import { fetchBoardsAtom } from '../atoms/boardAtom';
+import { useAtom } from 'jotai';
 
 interface PinGridProps {
   initialPins: Pin[];
@@ -16,6 +19,11 @@ export function PinGrid({ initialPins, initialCursor }: PinGridProps) {
   const router = useRouter();
   const { pins, loading, hasMore, ref } = usePinLoader(initialPins, initialCursor);
   const { imageLoadingStates, initialLoading } = useImageLoader(pins);
+  const [, fetchBoards] = useAtom(fetchBoardsAtom);
+
+  useEffect(() => {
+    fetchBoards();
+  }, [fetchBoards]);
 
   const handlePinClick = (pin: Pin) => {
     router.push(`/pins/${pin.id}`);

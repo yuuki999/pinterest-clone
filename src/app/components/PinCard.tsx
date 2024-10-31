@@ -3,6 +3,8 @@ import { Pin } from "../types/pin";
 import { PinCardSkeleton } from "./PinCardSkeleton";
 import { usePinSave } from "../hooks/usePinSave/usePinSave";
 import { PinActionButtons } from "./PinActionButtons";
+import { BoardSelector } from "./board/BoardSelector";
+import { useState } from "react";
 
 interface PinCardProps {
   pin: Pin;
@@ -20,15 +22,34 @@ export const PinCard = ({
   onSaveToggle 
 }: PinCardProps) => {
   const { handleSave } = usePinSave(pin.id);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   if (!isLoaded) {
     return <PinCardSkeleton />;
   }
 
+  // ピン保存
   const handleSaveClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     await handleSave();
     onSaveToggle?.();
+  };
+
+  // ピンをボードに保存する
+  const handleSaveToBoard = async (boardId: string) => {
+    try {
+      const response = await fetch(`/api/boards/${boardId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pinId: pin.id }),
+      });
+      
+      if (response.ok) {
+        onSaveToggle?.();
+      }
+    } catch (error) {
+      console.error('Error saving to board:', error);
+    }
   };
 
   const handleShare = (e: React.MouseEvent) => {
@@ -53,11 +74,18 @@ export const PinCard = ({
           loading="lazy"
         />
 
+        <BoardSelector
+          pinId={pin.id}
+          onSaveToBoard={handleSaveToBoard}
+          onOpenChange={setIsPopoverOpen}
+        />
+
         <PinActionButtons
           onSave={handleSaveClick}
           onShare={handleShare}
           onMore={handleMore}
           isSaved={isSaved}
+          isPopoverOpen={isPopoverOpen}
         />
 
         {showTitle && (

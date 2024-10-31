@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: false,  // ローカルでuseEffectが2回呼ばれる問題を回避するため
   images: {
     domains: ['localhost'], // 開発環境用
     remotePatterns: [

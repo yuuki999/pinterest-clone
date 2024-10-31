@@ -44,7 +44,6 @@ export async function GET() {
       },
       include: {
         pins: {
-          take: 1, // サムネイル用に最新の1件を取得、ここ4件にするかも。
           orderBy: {
             createdAt: 'desc'
           }
