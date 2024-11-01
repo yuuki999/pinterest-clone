@@ -1,6 +1,7 @@
 import { Button } from "@/app/components/shadcn/ui/button";
 import { Share2, MoreHorizontal } from "lucide-react";
 import { useState, useEffect } from "react";
+import { SaveButton } from "./ui/button/SaveButton";
 
 interface PinActionButtonsProps {
   onSave: (e: React.MouseEvent) => void;
@@ -37,16 +38,7 @@ export const PinActionButtons = ({
         onMouseEnter={() => setIsVisible(true)}
         onMouseLeave={() => !isPopoverOpen && setIsVisible(false)}
       >
-        <Button 
-          onClick={onSave}
-          className={`${
-            isSaved 
-              ? 'bg-gray-700 hover:bg-gray-800' 
-              : 'bg-red-500 hover:bg-red-600'
-          } text-white rounded-full px-4`}
-        >
-          {isSaved ? '保存済み' : '保存'}
-        </Button>
+        <SaveButton onClick={onSave} isSaved={isSaved}/>
       </div>
 
       <div 

@@ -8,10 +8,24 @@ import { Heart, Share2, Download } from 'lucide-react';
 import { Pin } from '@/app/types/pin';
 import { useSession } from 'next-auth/react';
 import { FollowButton } from '@/app/components/follow/FollowButton';
+import { PinDetailHeader } from './PinDetailHeader';
+
+// TODO: 
+// フォローを止めるボタン実装
+// フォローボタンを表示。
+// コメント機能実装
+// ユーザーの画像を表示したい
+// UIの調整
+// 欲しいボタンは、
+//・保存
+//・共有
+//・いいね
+//・DL
+//・ボード
 
 interface PinDetailProps {
   pin: Pin;
-  initialIsFollowing: boolean; // すでにフォローしているかどうか
+  initialIsFollowing?: boolean; // すでにフォローしているかどうか、これでフォローしていたらフォローを止めるボタンとしたい。
 }
 
 export function PinDetail({ pin, initialIsFollowing }: PinDetailProps) {
@@ -80,7 +94,19 @@ export function PinDetail({ pin, initialIsFollowing }: PinDetailProps) {
     return 'w-full md:w-[50vw]';
     // - w-full: モバイルでは幅いっぱい
     // - md:w-[50vw]: タブレット以上では画面幅の50%
-};
+  };
+
+  const handleShare = () => {
+    // シェア機能の実装
+  };
+
+  const handleDownload = () => {
+    // ダウンロード機能の実装
+  };
+
+  const handleSave = (e: React.MouseEvent) => {
+    // 保存機能の実装
+  };
 
   return (
     <div className="flex flex-col md:flex-row bg-white rounded-xl overflow-hidden shadow-lg mx-auto max-h-[85vh]">
@@ -109,19 +135,15 @@ export function PinDetail({ pin, initialIsFollowing }: PinDetailProps) {
       </div>
 
       {/* 右側: 情報 */}
-      <div className="flex flex-col w-full md:w-[400px] p-6 overflow-y-auto">
+      <div className="flex flex-col w-full md:w-[500px] lg:w-[600px] p-8 overflow-y-auto">
         {/* アクションボタン */}
-        <div className="flex justify-end gap-2 mb-6">
-          <Button variant="ghost" size="icon">
-            <Share2 className="h-5 w-5" />
-          </Button>
-          <Button variant="ghost" size="icon">
-            <Download className="h-5 w-5" />
-          </Button>
-          <Button variant="ghost" size="icon">
-            <Heart className="h-5 w-5" />
-          </Button>
-        </div>
+        <PinDetailHeader 
+          pinId={pin.id}
+          onShare={handleShare}
+          onDownload={handleDownload}
+          onSave={handleSave}
+          isSaved={false}
+        />
 
         {/* タイトルと説明 */}
         <h1 className="text-2xl font-bold mb-4">{pin.title}</h1>

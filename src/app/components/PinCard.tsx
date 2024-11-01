@@ -62,6 +62,7 @@ export const PinCard = ({
         <BoardSelector
           pinId={pin.id}
           onOpenChange={setIsPopoverOpen}
+          variant="card"
         />
 
         <PinActionButtons

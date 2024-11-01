@@ -1,6 +1,6 @@
 
 import { notFound } from 'next/navigation';
-import { PinDetail } from '../components/PinDetail';
+import { PinDetail } from './components/PinDetail';
 import { SimilarPins } from '../components/SimilarPins';
 import { getPinById } from '@/app/libs/pins';
 

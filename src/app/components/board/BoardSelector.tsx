@@ -22,10 +22,18 @@ import { ToastMessage } from '../ui/ToastMessage';
 interface BoardSelectorProps {
   pinId: string;
   onOpenChange: (isOpen: boolean) => void;
+  variant?: 'card' | 'header';
+  className?: string;
 }
 
 // TODO: 新規ボードを作成を、ポップアップ外をクリックして閉じた時に、ボードに保存とか他のボタンが残り続ける。
-export const BoardSelector = ({ pinId, onOpenChange }: BoardSelectorProps) => {
+// デザインも良くないし、複雑でいろんなものに依存しているので超リファクタ対象。
+export const BoardSelector = ({ 
+  pinId, 
+  onOpenChange,
+  variant = 'card',
+  className = '' 
+}: BoardSelectorProps) => {
   const [boards]                                    = useAtom(boardsAtom);
   const [, createBoard]                             = useAtom(createBoardAtom);
   const { savePinToBoard }                          = usePinBoardOperations(pinId)
@@ -110,13 +118,24 @@ export const BoardSelector = ({ pinId, onOpenChange }: BoardSelectorProps) => {
     setShowNewBoardDialog(true);
   };
 
-  const visibilityClass = isPopoverOpen || showNewBoardDialog || isVisible
-    ? 'opacity-100'
-    : 'opacity-0 group-hover:opacity-100';
+  // スタイリングの設定
+  const containerStyles = {
+    card: `absolute top-2 left-2 transition-opacity duration-200 z-10 ${
+      isPopoverOpen || showNewBoardDialog || isVisible
+        ? 'opacity-100'
+        : 'opacity-0 group-hover:opacity-100'
+    }`,
+    header: 'relative transition-opacity duration-200 z-10'
+  };
+
+  const buttonStyles = {
+    card: 'bg-white hover:bg-gray-100 text-gray-700 rounded-full px-4 py-2',
+    header: 'bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full px-6 py-2'
+  };
 
   return (
     <div
-      className={`absolute top-2 left-2 ${visibilityClass} transition-opacity duration-200 z-10`}
+      className={`${containerStyles[variant]} ${className}`}
       onClick={(e) => e.stopPropagation()}
       onMouseEnter={() => setIsVisible(true)}
       onMouseLeave={() => !isPopoverOpen && !showNewBoardDialog && setIsVisible(false)}
@@ -125,7 +144,7 @@ export const BoardSelector = ({ pinId, onOpenChange }: BoardSelectorProps) => {
         <PopoverTrigger asChild>
           <Button
             variant="ghost"
-            className="bg-white hover:bg-gray-100 text-gray-700 rounded-full px-4 py-2 flex items-center gap-2"
+            className={`${buttonStyles[variant]} flex items-center gap-2`}
             onClick={handleMainButtonClick}
           >
             <FolderPlus className="w-4 h-4" />
