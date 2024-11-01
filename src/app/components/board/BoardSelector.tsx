@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/app/components/shadcn/ui/button";
 import {
   Popover,
@@ -15,34 +15,25 @@ import {
 import { Input } from "@/app/components/shadcn/ui/input";
 import { Textarea } from "@/app/components/shadcn/ui/textarea";
 import { ChevronDown, Plus, FolderPlus } from "lucide-react";
-import { boardsAtom, createBoardAtom } from '@/app/atoms/boardAtom';
+import { boardsAtom, createBoardAtom, usePinBoardOperations } from '@/app/atoms/boardAtom';
 import { useAtom } from 'jotai';
-
-interface Board {
-  id: string;
-  title: string;
-  description?: string;
-}
+import { ToastMessage } from '../ui/ToastMessage';
 
 interface BoardSelectorProps {
   pinId: string;
-  onSaveToBoard: (boardId: string) => Promise<void>;
   onOpenChange: (isOpen: boolean) => void;
 }
 
 // TODO: 新規ボードを作成を、ポップアップ外をクリックして閉じた時に、ボードに保存とか他のボタンが残り続ける。
-export const BoardSelector = ({ pinId, onSaveToBoard, onOpenChange }: BoardSelectorProps) => {
-  const [boards] = useAtom(boardsAtom);
-  const [, createBoard] = useAtom(createBoardAtom);
-  const [loading, setLoading] = useState(false);
+export const BoardSelector = ({ pinId, onOpenChange }: BoardSelectorProps) => {
+  const [boards]                                    = useAtom(boardsAtom);
+  const [, createBoard]                             = useAtom(createBoardAtom);
+  const { savePinToBoard }                          = usePinBoardOperations(pinId)
+  const [loading, setLoading]                       = useState(false);
   const [showNewBoardDialog, setShowNewBoardDialog] = useState(false);
-  const [newBoard, setNewBoard] = useState({ title: '', description: '' });
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-
-
-  console.log("boards")
-  console.log(boards)
+  const [newBoard, setNewBoard]                     = useState({ title: '', description: '' });
+  const [isPopoverOpen, setIsPopoverOpen]           = useState(false);
+  const [isVisible, setIsVisible]                   = useState(false);
 
   const handleMainButtonClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -57,15 +48,15 @@ export const BoardSelector = ({ pinId, onSaveToBoard, onOpenChange }: BoardSelec
     setShowNewBoardDialog(open);
   };
 
+  // ボードを作成する。
   const handleCreateBoard = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     try {
       setLoading(true);
-      const createdBoard = await createBoard(newBoard);
+      await createBoard(newBoard);
       setNewBoard({ title: '', description: '' });
       setShowNewBoardDialog(false);
-      await onSaveToBoard(createdBoard.id);
     } catch (error) {
       console.error('Error creating board:', error);
     } finally {
@@ -76,7 +67,41 @@ export const BoardSelector = ({ pinId, onSaveToBoard, onOpenChange }: BoardSelec
   const handleSelectBoard = async (e: React.MouseEvent, boardId: string) => {
     e.preventDefault();
     e.stopPropagation();
-    await onSaveToBoard(boardId);
+
+    try {
+      await savePinToBoard(boardId);
+      ToastMessage.success({
+        title: "保存完了",
+        description: "ピンをボードに保存しました",
+      });
+    } catch (status) {
+      switch (status) {
+        case 409:
+          ToastMessage.info({
+            title: "保存済み",
+            description: "このピンは既にボードに保存されています",
+          });
+          break;
+        case 404:
+          ToastMessage.error({
+            title: "エラー",
+            description: "ボードまたはピンが見つかりません",
+          });
+          break;
+        case 403:
+          ToastMessage.error({
+            title: "権限エラー",
+            description: "この操作を行う権限がありません",
+          });
+          break;
+        default:
+          ToastMessage.error({
+            title: "エラー",
+            description: "ピンの保存に失敗しました",
+          });
+      }
+    }
+    
     handlePopoverChange(false);
   };
 

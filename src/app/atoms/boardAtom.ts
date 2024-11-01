@@ -1,4 +1,4 @@
-import { atom } from 'jotai';
+import { atom, useAtom } from 'jotai';
 
 interface Board {
   id: string;
@@ -60,3 +60,63 @@ export const createBoardAtom = atom(
     }
   }
 );
+
+
+interface SavePinToBoardParams {
+  pinId: string;
+  boardId: string;
+}
+
+// ボードに対する、ピンの保存状態を管理するatom
+export const pinSavingAtom = atom<{ [key: string]: boolean }>({});
+
+// ピンをボードに保存する処理を行うatom
+export const savePinToBoardAtom = atom(
+  null,
+  async (get, set, { pinId, boardId }: SavePinToBoardParams) => {
+    try {
+      set(pinSavingAtom, prev => ({
+        ...prev,
+        [pinId]: true
+      }));
+
+      const response = await fetch(`/api/boards/${boardId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pinId }),
+      });
+
+      if (!response.ok) {
+        throw response.status;
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error saving pin to board:', error);
+      if (typeof error === 'number') {
+        throw error;
+      }
+
+      // その他のエラーは500として扱う
+      throw 500;
+    } finally {
+      set(pinSavingAtom, prev => ({
+        ...prev,
+        [pinId]: false
+      }));
+    }
+  }
+);
+
+// カスタムフック
+export function usePinBoardOperations(pinId: string) {
+  const [saving] = useAtom(pinSavingAtom);
+  const [, savePinToBoard] = useAtom(savePinToBoardAtom);
+
+  return {
+    saving: saving[pinId] || false,
+    savePinToBoard: async (boardId: string) => {
+      return await savePinToBoard({ pinId, boardId });
+    }
+  };
+}
