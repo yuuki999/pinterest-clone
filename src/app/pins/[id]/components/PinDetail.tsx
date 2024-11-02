@@ -67,14 +67,6 @@ export function PinDetail({ pin, initialIsFollowing }: PinDetailProps) {
     // シェア機能の実装
   };
 
-  const handleDownload = () => {
-    // ダウンロード機能の実装
-  };
-
-  const handleSave = (e: React.MouseEvent) => {
-    // 保存機能の実装
-  };
-
   // コメント送信機能
   const handleCommentSubmit = async (comment: string) => {
     try {
@@ -135,9 +127,8 @@ export function PinDetail({ pin, initialIsFollowing }: PinDetailProps) {
             {/* ヘッダー部分 - 固定高さ */}
             <PinDetailHeader 
               pinId={pin.id}
+              imageUrl={signedUrl}
               onShare={handleShare}
-              onDownload={handleDownload}
-              onSave={handleSave}
               isSaved={false}
             />
 

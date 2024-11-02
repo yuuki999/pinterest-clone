@@ -6,30 +6,35 @@ import { SaveButton } from '@/app/components/ui/button/SaveButton';
 import BoardSelector from '@/app/components/board/BoardSelector';
 import { useLike } from '../hooks/useLike';
 import { LikeButton } from '@/app/components/ui/button/LikeButton';
+import { useDownload } from '../hooks/useDownload';
 
 interface PinDetailHeaderProps {
   pinId: string;
+  imageUrl: string;
   onShare?: () => void;
-  onDownload?: () => void;
-  onSave?: (e: React.MouseEvent) => void;
   isSaved?: boolean;
 }
 
 export function PinDetailHeader({ 
   pinId,
+  imageUrl,
   onShare, 
-  onDownload,
-  onSave,
   isSaved = false,
 }: PinDetailHeaderProps) {
   const [, setIsPopoverOpen] = useState(false);
   const { isLiked, likeCount, toggleLike, fetchLikeStatus, isLoading } = useLike({ pinId, initialLiked: false}); // いいね機能
+  const { downloadImage } = useDownload({ imageUrl, fileName: `pin_${pinId}`}); // DL機能
   
   useEffect(() => {
     if (pinId) {
       fetchLikeStatus();
     }
   }, [pinId]);
+
+
+  function onSave(e: React.MouseEvent) {
+    // 仮実装
+  }
 
   return (
     <div className="flex justify-between items-center mb-6">
@@ -41,7 +46,7 @@ export function PinDetailHeader({
         />
         <ActionButton 
           icon={Download} 
-          onClick={onDownload}
+          onClick={downloadImage}
         />
         <LikeButton 
           isLiked={isLiked}

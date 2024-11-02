@@ -52,9 +52,6 @@ export const useLike = ({
       }
 
       const { liked, count } = await response.json();
-
-      console.log("ピンに対するいいねの状態")
-      console.log(liked)
       
       setIsLiked(liked);
       setLikeCount(count);
