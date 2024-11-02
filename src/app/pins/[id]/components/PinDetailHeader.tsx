@@ -8,18 +8,17 @@ import { useLike } from '../hooks/useLike';
 import { LikeButton } from '@/app/components/ui/button/LikeButton';
 import { useDownload } from '../hooks/useDownload';
 import { usePinSave } from '@/app/hooks/usePinSave/usePinSave';
+import { ShareButton } from './ShareButton';
 
 interface PinDetailHeaderProps {
   pinId: string;
   imageUrl: string;
-  onShare?: () => void;
   initialIsSaved?: boolean;
 }
 
 export function PinDetailHeader({ 
   pinId,
   imageUrl,
-  onShare, 
   initialIsSaved = false,
 }: PinDetailHeaderProps) {
   const [, setIsPopoverOpen] = useState(false);
@@ -46,9 +45,10 @@ export function PinDetailHeader({
     <div className="flex justify-between items-center mb-6">
       {/* 左側のアクションボタン */}
       <div className="flex gap-2">
-        <ActionButton 
-          icon={Share2} 
-          onClick={onShare}
+        {/* TODO: ここのサイトURLをあとで変える */}
+        <ShareButton 
+          url={`https://yoursite.com/pin/${pinId}`}
+          title="シェアしたいコンテンツのタイトル"
         />
         <ActionButton 
           icon={Download} 

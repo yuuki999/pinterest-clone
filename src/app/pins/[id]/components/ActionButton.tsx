@@ -1,3 +1,5 @@
+// これ汎用化は難しかったかも。もうちょっと考える
+
 import { Button } from "@/app/components/shadcn/ui/button";
 import { Share2, Download } from "lucide-react";
 

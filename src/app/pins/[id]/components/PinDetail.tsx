@@ -62,11 +62,6 @@ export function PinDetail({ pin, initialIsFollowing }: PinDetailProps) {
     fetchAndPreloadImage();
   }, [pin.id]);
 
-
-  const handleShare = () => {
-    // シェア機能の実装
-  };
-
   // コメント送信機能
   const handleCommentSubmit = async (comment: string) => {
     try {
@@ -128,8 +123,7 @@ export function PinDetail({ pin, initialIsFollowing }: PinDetailProps) {
             <PinDetailHeader 
               pinId={pin.id}
               imageUrl={signedUrl}
-              onShare={handleShare}
-              isSaved={false}
+              initialIsSaved={false}
             />
 
             <h1 className="text-2xl font-bold mt-8 mb-4 text-gray-900">{pin.title}</h1>
