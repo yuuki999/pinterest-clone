@@ -4,11 +4,12 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/app/components/shadcn/ui/avatar';
 import { Button } from '@/app/components/shadcn/ui/button';
-import { Heart, Share2, Download } from 'lucide-react';
 import { Pin } from '@/app/types/pin';
 import { useSession } from 'next-auth/react';
 import { FollowButton } from '@/app/components/follow/FollowButton';
 import { PinDetailHeader } from './PinDetailHeader';
+import useImageDimensions from '../hooks/useImageDimensions';
+import usePinLayout from '../hooks/usePinLayout';
 
 // TODO: 
 // フォローを止めるボタン実装
@@ -30,12 +31,11 @@ interface PinDetailProps {
 
 export function PinDetail({ pin, initialIsFollowing }: PinDetailProps) {
   const [comment, setComment] = useState('');
-  const [imageRatio, setImageRatio] = useState(1);
-  const [containerHeight, setContainerHeight] = useState('auto');
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const imageContainerRef = useRef<HTMLDivElement>(null);
+  const [, setIsLoading] = useState(true);
   const { data: session } = useSession();
+  const [dimensions, isLoading] = useImageDimensions(signedUrl);
+  const layout = usePinLayout(dimensions.width, dimensions.height);
 
   // 画像を取得する。
   useEffect(() => {
@@ -56,46 +56,6 @@ export function PinDetail({ pin, initialIsFollowing }: PinDetailProps) {
     fetchSignedUrl();
   }, [pin.id]);
 
-  useEffect(() => {
-    if (!signedUrl) return;
-
-    // 画像の実寸のサイズを取得するため、新しいImage要素を作成
-    const img = new window.Image();
-    img.src = signedUrl;
-
-    // 画像のロードが完了した時の処理
-    img.onload = () => {
-      // 画像の縦横比を計算
-      const ratio = img.height / img.width;
-      setImageRatio(ratio);
-      
-      // コンテナの高さを設定
-      // ビューポートの高さの85%か、画像の高さの小さい方に設定
-      const maxHeight = Math.min(window.innerHeight * 0.85, img.height);
-      setContainerHeight(`${maxHeight}px`);
-    };
-  }, [signedUrl]);
-
-  const getImageContainerClass = () => {
-    // 縦長の画像（縦:横 = 1.5:1より大きい）の場合
-    if (imageRatio > 1.5) {
-        return 'w-full md:w-auto md:max-h-[85vh]';
-        // - w-full: モバイルでは幅いっぱい
-        // - md:w-auto: タブレット以上では自然な幅
-        // - md:max-h-[85vh]: タブレット以上では画面の85%の高さまで
-    } 
-    // 横長の画像（縦:横 = 0.7:1未満）の場合
-    else if (imageRatio < 0.7) {
-        return 'w-full md:w-[60vw]';
-        // - w-full: モバイルでは幅いっぱい
-        // - md:w-[60vw]: タブレット以上では画面幅の60%
-    }
-    // 標準的な比率の画像（0.7 ≤ ratio ≤ 1.5）の場合
-    return 'w-full md:w-[50vw]';
-    // - w-full: モバイルでは幅いっぱい
-    // - md:w-[50vw]: タブレット以上では画面幅の50%
-  };
-
   const handleShare = () => {
     // シェア機能の実装
   };
@@ -109,28 +69,26 @@ export function PinDetail({ pin, initialIsFollowing }: PinDetailProps) {
   };
 
   return (
-    <div className="flex flex-col md:flex-row bg-white rounded-xl overflow-hidden shadow-lg mx-auto max-h-[85vh]">
-      {/* 左側: 画像 */}
-      <div className={`${getImageContainerClass()} relative flex-shrink-0`}>
-        {isLoading ? (
-          <div className="flex items-center justify-center w-full h-full min-h-[300px]">
+    <div className="flex flex-col md:flex-row bg-white rounded-3xl">
+      <div
+        style={{
+          width: layout.containerWidth,
+          height: layout.containerHeight
+        }}
+        className="relative bg-black rounded-tl-3xl rounded-bl-3xl overflow-hidden"
+      >
+        {isLoading || !signedUrl ? (
+          <div className="flex items-center justify-center w-full h-full">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900" />
           </div>
-        ) : signedUrl ? (
-          <div className="relative w-full h-full min-h-[300px] md:min-h-[500px]">
-            <Image
-              src={signedUrl}
-              alt={pin.title || 'Pin image'}
-              fill
-              className="object-contain"
-              sizes="(max-width: 768px) 100vw, 50vw"
-              priority
-            />
-          </div>
         ) : (
-          <div className="flex items-center justify-center w-full h-full min-h-[300px]">
-            <p>No image available</p>
-          </div>
+          <Image
+            src={signedUrl}
+            alt={pin.title}
+            fill
+            className={layout.imageStyle}
+            priority
+          />
         )}
       </div>
 
