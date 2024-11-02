@@ -126,33 +126,41 @@ export function PinDetail({ pin, initialIsFollowing }: PinDetailProps) {
       </div>
 
       {/* 右側：情報 */}
-      <div className="flex flex-col w-full md:w-[500px] lg:w-[600px] p-8 overflow-y-auto">
-        {/* 既存のコンテンツ */}
-        <PinDetailHeader 
-          pinId={pin.id}
-          onShare={handleShare}
-          onDownload={handleDownload}
-          onSave={handleSave}
-          isSaved={false}
-        />
+      <div 
+        className="flex flex-col w-full md:w-[500px] lg:w-[600px]"
+        style={{ height: layout.containerHeight }}
+      >
+        <div className="flex flex-col h-full pt-8 pr-8 pb-4 pl-8">
+            {/* ヘッダー部分 - 固定高さ */}
+            <PinDetailHeader 
+              pinId={pin.id}
+              onShare={handleShare}
+              onDownload={handleDownload}
+              onSave={handleSave}
+              isSaved={false}
+            />
 
-        <h1 className="text-2xl font-bold mt-8 mb-4 text-gray-900">{pin.title}</h1>
-        {pin.description && (
-          <p className="text-gray-600 mb-6">{pin.description}</p>
-        )}
+            <h1 className="text-2xl font-bold mt-8 mb-4 text-gray-900">{pin.title}</h1>
+            {pin.description && (
+              <p className="text-gray-600 mb-6">{pin.description}</p>
+            )}
 
-        <PinAuthorSection
-          author={pin.user}
-          createdAt={pin.createdAt}
-          currentUserId={session?.user?.id}
-          initialIsFollowing={initialIsFollowing}
-          className="mb-8"
-        />
+            <PinAuthorSection
+              author={pin.user}
+              createdAt={pin.createdAt}
+              currentUserId={session?.user?.id}
+              initialIsFollowing={initialIsFollowing}
+              className="mb-8"
+            />
 
-        <PinComments
-          pinId={pin.id}
-          onCommentSubmit={handleCommentSubmit}
-        />
+          {/* コメント部分 - 残りの高さを埋める */}
+          <div className="flex-1 overflow-hidden">
+            <PinComments
+              pinId={pin.id}
+              onCommentSubmit={handleCommentSubmit}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

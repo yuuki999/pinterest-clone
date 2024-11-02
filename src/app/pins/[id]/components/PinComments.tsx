@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/app/components/shadcn/ui/button';
 import { useSession } from 'next-auth/react';
 import ProfileAvatar from '@/app/profile/components/ProfileAvatar';
+import { ScrollArea, ScrollBar } from '@/app/components/shadcn/ui/scroll-area';
 
 interface Comment {
   id: string;
@@ -18,16 +19,16 @@ interface Comment {
 
 interface PinCommentsProps {
   pinId: string;
+  onCommentSubmit: (comment: string) => Promise<void>;
 }
 
-export function PinComments({ pinId }: PinCommentsProps) {
+export function PinComments({ pinId, onCommentSubmit }: PinCommentsProps) {
   const { data: session } = useSession();
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // コメントを取得
   useEffect(() => {
     const fetchComments = async () => {
       try {
@@ -45,7 +46,6 @@ export function PinComments({ pinId }: PinCommentsProps) {
     fetchComments();
   }, [pinId]);
 
-  // コメントを作成
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!comment.trim()) return;
@@ -76,43 +76,51 @@ export function PinComments({ pinId }: PinCommentsProps) {
     return <div>コメントを読み込み中...</div>;
   }
 
+  console.log("comments")
+  console.log(comments)
+
   return (
-    <>
-      <div className="flex-1 min-h-0">
-        <h2 className="font-semibold text-lg mb-4">コメント</h2>
-        <div className="space-y-4 overflow-y-auto max-h-[400px]">
-          {comments.map((comment) => (
-            <div key={comment.id} className="flex gap-3 text-gray-900">
-              <ProfileAvatar
-                imageKey={comment.user.image}
-                fallback={comment.user.name?.[0] || '?'}
-                className="h-8 w-8"
-              />
-              <div className="flex-1">
-                <div className="flex items-center gap-2 justify-between">
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-sm text-gray-900">
-                      {comment.user.name}
-                    </p>
-                    <span className="text-xs text-gray-500">
-                      {new Date(comment.createdAt).toLocaleDateString()}
-                    </span>
+    <div className="flex flex-col h-full">
+      {/* コメントセクション - 残りの高さを埋める */}
+      <div className="flex-1 overflow-hidden">
+        <h2 className="font-semibold text-lg mb-4 text-gray-900">コメント</h2>
+        <ScrollArea className="h-[calc(100%-2rem)]">
+          <div className="space-y-4 pr-4 mb-4">
+            {comments.map((comment) => (
+              <div key={comment.id} className="flex gap-3 text-gray-900">
+                <ProfileAvatar
+                  imageKey={comment.user.image}
+                  fallback={comment.user.name || '???'}
+                  className="h-8 w-8 flex-shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 justify-between">
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-sm text-gray-900 truncate">
+                        {comment.user.name}
+                      </p>
+                      <span className="text-xs text-gray-500 flex-shrink-0">
+                        {new Date(comment.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
                   </div>
+                  <p className="text-sm text-gray-700 break-words">{comment.content}</p>
                 </div>
-                <p className="text-sm text-gray-700">{comment.content}</p>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+          <ScrollBar orientation="vertical" />
+        </ScrollArea>
       </div>
 
+      {/* コメント入力フォーム - 固定位置 */}
       {session ? (
-        <form onSubmit={handleSubmit} className="mt-6">
+        <form onSubmit={handleSubmit} className="mt-2 pt-4 border-t">
           <div className="flex items-center gap-3">
             <ProfileAvatar
               imageKey={session.user?.image}
               fallback={session.user?.name?.[0] || 'U'}
-              className="h-8 w-8"
+              className="h-8 w-8 flex-shrink-0"
             />
             <input
               type="text"
@@ -124,16 +132,17 @@ export function PinComments({ pinId }: PinCommentsProps) {
             <Button 
               type="submit" 
               disabled={!comment.trim() || isSubmitting}
+              className="flex-shrink-0"
             >
               投稿
             </Button>
           </div>
         </form>
       ) : (
-        <p className="mt-6 text-center text-sm text-gray-500">
+        <p className="mt-4 pt-4 border-t text-center text-sm text-gray-500">
           コメントを投稿するにはログインしてください
         </p>
       )}
-    </>
+    </div>
   );
 }
