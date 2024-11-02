@@ -2,20 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/app/components/shadcn/ui/button';
-import { useSession } from 'next-auth/react';
 import ProfileAvatar from '@/app/profile/components/ProfileAvatar';
 import { ScrollArea, ScrollBar } from '@/app/components/shadcn/ui/scroll-area';
-
-interface Comment {
-  id: string;
-  content: string;
-  createdAt: string;
-  user: {
-    id: string;
-    name: string | null;
-    image: string | null;
-  };
-}
+import { useSession } from 'next-auth/react';
+import { Comment } from '@/app/types/comment';
 
 interface PinCommentsProps {
   pinId: string;
@@ -76,8 +66,11 @@ export function PinComments({ pinId, onCommentSubmit }: PinCommentsProps) {
     return <div>コメントを読み込み中...</div>;
   }
 
-  console.log("comments")
-  console.log(comments)
+  // メールアドレスから@より前の部分を取得する関数
+  const getDisplayName = (name: string | null, email?: string | null): string => {
+    return (name || (email?.split('@')[0])) ?? '?';
+  };
+
 
   return (
     <div className="flex flex-col h-full">
@@ -90,14 +83,14 @@ export function PinComments({ pinId, onCommentSubmit }: PinCommentsProps) {
               <div key={comment.id} className="flex gap-3 text-gray-900">
                 <ProfileAvatar
                   imageKey={comment.user.image}
-                  fallback={comment.user.name || '???'}
+                  fallback={(getDisplayName(comment.user.name, comment.user.email))[0]}
                   className="h-8 w-8 flex-shrink-0"
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 justify-between">
                     <div className="flex items-center gap-2">
                       <p className="font-semibold text-sm text-gray-900 truncate">
-                        {comment.user.name}
+                        {getDisplayName(comment.user.name, session?.user?.email)}
                       </p>
                       <span className="text-xs text-gray-500 flex-shrink-0">
                         {new Date(comment.createdAt).toLocaleDateString()}
@@ -119,7 +112,7 @@ export function PinComments({ pinId, onCommentSubmit }: PinCommentsProps) {
           <div className="flex items-center gap-3">
             <ProfileAvatar
               imageKey={session.user?.image}
-              fallback={session.user?.name?.[0] || 'U'}
+              fallback={session.user?.email?.[0] || '?'}
               className="h-8 w-8 flex-shrink-0"
             />
             <input

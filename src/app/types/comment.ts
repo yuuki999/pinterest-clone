@@ -7,5 +7,6 @@ export interface Comment {
     id: string;
     name: string | null;
     image: string | null;
+    email?: string;
   };
 }

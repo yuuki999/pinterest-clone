@@ -103,7 +103,8 @@ export function PinDetail({ pin, initialIsFollowing }: PinDetailProps) {
     />;
   }
 
-  console.log(pin)
+
+  console.log(session?.user?.image)
 
   return (
     <div className="flex flex-col md:flex-row bg-white rounded-3xl">
