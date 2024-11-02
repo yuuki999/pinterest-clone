@@ -40,7 +40,7 @@ export async function POST(req: Request) {
       });
     }
 
-    // 新規保存
+    // 保存状態でなければ、新規保存
     const save = await prisma.save.create({
       data: {
         userId: session.user.id,

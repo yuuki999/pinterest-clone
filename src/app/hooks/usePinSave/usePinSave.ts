@@ -3,25 +3,32 @@
 import { ToastMessage } from '@/app/components/ui/ToastMessage';
 import { useState, useEffect } from 'react';
 
-export const usePinSave = (pinId: string) => {
-  const [isSaved, setIsSaved] = useState(false);
+interface UsePinSaveProps {
+  pinId: string;
+  initialIsSaved?: boolean;
+}
+
+export const usePinSave = ({ pinId, initialIsSaved = false }: UsePinSaveProps) => {
+  const [isSaved, setIsSaved] = useState(initialIsSaved); // 保存されていたらtrue
   const [isLoading, setIsLoading] = useState(false);
 
-  // useEffect(() => {
-  //   checkSaveStatus();
-  // }, [pinId]);
+  // 保存状態の、初期状態を取得
+  useEffect(() => {
+    const fetchSaveStatus = async () => {
+      try {
+        const response = await fetch(`/api/saves/${pinId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch save status');
+        }
+        const data = await response.json();
+        setIsSaved(data.saved);
+      } catch (error) {
+        console.error('Failed to fetch save status:', error);
+      }
+    };
 
-  // 保存チェックをする。これめっちゃ重いかも。
-  // 一覧に表示するときに省けばここの処理は不要になるのでコメントアウトする。
-  // const checkSaveStatus = async () => {
-  //   try {
-  //     const response = await fetch(`/api/saves?pinId=${pinId}`);
-  //     const data = await response.json();
-  //     setIsSaved(data.saved);
-  //   } catch (error) {
-  //     console.error('Failed to check save status:', error);
-  //   }
-  // };
+    fetchSaveStatus();
+  }, [pinId]);
 
   const handleSave = async (e?: React.MouseEvent) => {
     e?.stopPropagation();

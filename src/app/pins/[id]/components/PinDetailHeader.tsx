@@ -7,24 +7,30 @@ import BoardSelector from '@/app/components/board/BoardSelector';
 import { useLike } from '../hooks/useLike';
 import { LikeButton } from '@/app/components/ui/button/LikeButton';
 import { useDownload } from '../hooks/useDownload';
+import { usePinSave } from '@/app/hooks/usePinSave/usePinSave';
 
 interface PinDetailHeaderProps {
   pinId: string;
   imageUrl: string;
   onShare?: () => void;
-  isSaved?: boolean;
+  initialIsSaved?: boolean;
 }
 
 export function PinDetailHeader({ 
   pinId,
   imageUrl,
   onShare, 
-  isSaved = false,
+  initialIsSaved = false,
 }: PinDetailHeaderProps) {
   const [, setIsPopoverOpen] = useState(false);
   const { isLiked, likeCount, toggleLike, fetchLikeStatus, isLoading } = useLike({ pinId, initialLiked: false}); // いいね機能
   const { downloadImage } = useDownload({ imageUrl, fileName: `pin_${pinId}`}); // DL機能
-  
+  const { isSaved, isLoading: isSaveLoading, handleSave } = usePinSave({ pinId, initialIsSaved });
+
+  const handleSaveClick = async (e: React.MouseEvent) => {
+    await handleSave();
+  };
+
   useEffect(() => {
     if (pinId) {
       fetchLikeStatus();
@@ -64,7 +70,7 @@ export function PinDetailHeader({
           variant="header"
         />
         <SaveButton 
-          onClick={onSave}
+          onClick={handleSaveClick}
           isSaved={isSaved}
         />
       </div>
