@@ -22,7 +22,7 @@ export function FollowButton({
 
   const handleFollow = async () => {
     if (!currentUserId) {
-      // ログインページへリダイレクトするなどの処理
+      // フォロー失敗の処理を書く。
       return;
     }
 

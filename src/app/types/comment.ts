@@ -1,8 +1,11 @@
-import { User } from "./user";
-
 export interface Comment {
   id: string;
-  text: string;
-  user: User;
-  createdAt: Date;
+  content: string;
+  text?: string;
+  createdAt: string;
+  user: {
+    id: string;
+    name: string | null;
+    image: string | null;
+  };
 }
