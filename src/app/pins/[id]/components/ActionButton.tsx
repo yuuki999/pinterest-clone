@@ -1,18 +1,16 @@
 import { Button } from "@/app/components/shadcn/ui/button";
-import { Heart, Share2, Download } from "lucide-react";
+import { Share2, Download } from "lucide-react";
 
-type ActionButtonIcon = typeof Heart | typeof Share2 | typeof Download;
+type ActionButtonIcon = typeof Share2 | typeof Download;
 
 interface ActionButtonProps {
   icon: ActionButtonIcon;
   onClick?: () => void;
-  isActive?: boolean;
 }
 
 export const ActionButton = ({ 
   icon: Icon, 
-  onClick, 
-  isActive = false 
+  onClick
 }: ActionButtonProps) => (
   <Button 
     variant="ghost" 
@@ -36,17 +34,17 @@ export const ActionButton = ({
     onClick={onClick}
   >
     <Icon 
-      className={`
+      className="
         h-5 
         w-5 
         transition-all 
         duration-200 
         ease-in-out
-        ${isActive 
-          ? 'text-primary fill-primary' 
-          : 'text-gray-600 dark:text-gray-300 group-hover:text-primary group-hover:scale-110'
-        }
-      `}
+        text-gray-600 
+        dark:text-gray-300 
+        group-hover:text-primary 
+        group-hover:scale-110
+      "
     />
     <span className="
       absolute 
@@ -70,7 +68,7 @@ export const ActionButton = ({
       pointer-events-none
       z-10
     ">
-      {Icon === Heart ? 'いいね' : Icon === Share2 ? 'シェア' : 'ダウンロード'}
+      {Icon === Share2 ? 'シェア' : 'ダウンロード'}
     </span>
   </Button>
 );

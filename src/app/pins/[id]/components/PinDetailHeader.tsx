@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Share2, Heart, Download } from 'lucide-react';
 
 import { ActionButton } from './ActionButton';
 import { SaveButton } from '@/app/components/ui/button/SaveButton';
 import BoardSelector from '@/app/components/board/BoardSelector';
+import { useLike } from '../hooks/useLike';
+import { LikeButton } from '@/app/components/ui/button/LikeButton';
 
 interface PinDetailHeaderProps {
   pinId: string;
@@ -20,8 +22,14 @@ export function PinDetailHeader({
   onSave,
   isSaved = false,
 }: PinDetailHeaderProps) {
-  const [isLiked, setIsLiked] = useState(false);
   const [, setIsPopoverOpen] = useState(false);
+  const { isLiked, likeCount, toggleLike, fetchLikeStatus, isLoading } = useLike({ pinId, initialLiked: false}); // いいね機能
+  
+  useEffect(() => {
+    if (pinId) {
+      fetchLikeStatus();
+    }
+  }, [pinId]);
 
   return (
     <div className="flex justify-between items-center mb-6">
@@ -35,10 +43,11 @@ export function PinDetailHeader({
           icon={Download} 
           onClick={onDownload}
         />
-        <ActionButton 
-          icon={Heart}
-          isActive={isLiked}
-          onClick={() => setIsLiked(!isLiked)}
+        <LikeButton 
+          isLiked={isLiked}
+          count={likeCount}
+          onClick={toggleLike}
+          isLoading={isLoading}
         />
       </div>
 
