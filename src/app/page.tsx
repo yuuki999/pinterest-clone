@@ -1,13 +1,18 @@
+import { getServerSession } from "next-auth";
 import { PinGrid } from "./components/PinGrid";
 import { getPins } from "./libs/db";
 import { getImageUrl } from "./libs/s3";
+import { authOptions } from "./libs/auth";
 
 export const revalidate = 0;
 
 export default async function Home() {
-  const { pins, nextCursor } = await getPins({ limit: 20 });
+  // セッションからユーザー情報を取得
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id;
+  const { pins, nextCursor } = await getPins({ limit: 50, userId: userId});
 
-  // S3の署名付きURLを生成
+  // S3の署名付きURLを生成、初回pin取得
   const pinsWithSignedUrls = await Promise.all(
     pins.map(async (pin) => {
       try {

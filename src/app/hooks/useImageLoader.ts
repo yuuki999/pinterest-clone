@@ -1,59 +1,90 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Pin } from '../types/pin';
 
 export interface LoadingState {
   [key: string]: boolean;
 }
 
-// TODO: これのキャッチアップが必要。
+// 画像が完全に読み込まれるまでの状態を管理するカスタムフック
+// 管理が難しいので使用していない。
 export const useImageLoader = (pins: Pin[]) => {
-  // 各画像の読み込み状態を管理するステート
-  // 例: { "pin1": true, "pin2": false } → pin1は読み込み完了、pin2は未完了
   const [imageLoadingStates, setImageLoadingStates] = useState<LoadingState>({});
-  // 全体の初期ローディング状態を管理するステート
-  // true: まだ読み込み中、false: 全ての画像の読み込みが完了
   const [initialLoading, setInitialLoading] = useState(true);
+  
+  // 処理済みの画像IDを追跡
+  const processedPinIds = useRef<Set<string>>(new Set());
 
-  // 画像の読み込み状態を監視し、全ての画像が読み込まれたかチェック
+  // 画像読み込みの完了チェック
   useEffect(() => {
-    // すべての画像が読み込み完了（true）になっているかチェック
-    const allImagesLoaded = Object.values(imageLoadingStates).every(state => state);
-    // 全ての画像の状態が管理されているかチェック
-    const hasStates = Object.keys(imageLoadingStates).length === pins.length;
+    if (pins.length === 0) return;
     
-    // すべての画像が登録され、かつ読み込みが完了していれば
-    if (hasStates && allImagesLoaded) {
+    const allImagesLoaded = Object.values(imageLoadingStates).every(state => state);
+    const hasAllStates = Object.keys(imageLoadingStates).length === pins.length;
+    
+    if (hasAllStates && allImagesLoaded) {
       setInitialLoading(false);
     }
   }, [imageLoadingStates, pins.length]);
 
-  // 新しい画像の読み込みを開始
+  // 画像の読み込み処理
   useEffect(() => {
-    const loadImages = () => {
+    console.log("これ何回実行される？")
+    const loadNewImages = () => {
+      // 新しいピンのみを処理
+      const newPins = pins.filter(pin => !processedPinIds.current.has(pin.id));
+      
+      if (newPins.length === 0) return;
+
       const newLoadingStates: LoadingState = {};
       
-      pins.forEach(pin => {
-        const img = new Image();
-        img.src = pin.imageUrl;
-        newLoadingStates[pin.id] = false;
+      newPins.forEach(pin => {
+        // すでに状態が存在する場合はスキップ
+        if (imageLoadingStates[pin.id] !== undefined) return;
 
-        // 画像が読み込まれたときに、読み込み完了（true）に更新
+        processedPinIds.current.add(pin.id);
+        const img = new Image();
+        
         img.onload = () => {
           setImageLoadingStates(prev => ({
             ...prev,
             [pin.id]: true
           }));
         };
+
+        img.onerror = () => {
+          setImageLoadingStates(prev => ({
+            ...prev,
+            [pin.id]: false
+          }));
+        };
+
+        newLoadingStates[pin.id] = false;
+        img.src = pin.imageUrl; // src は最後に設定
       });
 
-      setImageLoadingStates(prev => ({
-        ...prev,
-        ...newLoadingStates
-      }));
+      if (Object.keys(newLoadingStates).length > 0) {
+        setImageLoadingStates(prev => ({
+          ...prev,
+          ...newLoadingStates
+        }));
+      }
     };
 
-    loadImages();
+    loadNewImages();
   }, [pins]);
 
-  return { imageLoadingStates, initialLoading };
+  // クリーンアップ関数を追加
+  useEffect(() => {
+    return () => {
+      processedPinIds.current.clear();
+    };
+  }, []);
+
+  return { 
+    imageLoadingStates, 
+    initialLoading,
+    // 追加の便利なメソッド
+    isImageLoaded: (pinId: string) => imageLoadingStates[pinId] === true,
+    areAllImagesLoaded: () => Object.values(imageLoadingStates).every(state => state)
+  };
 };

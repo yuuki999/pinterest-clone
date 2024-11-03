@@ -2,20 +2,22 @@ import { useState, useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { Pin } from '../types/pin';
 
+// 無限スクロールするためのカスタムフック
 export const usePinLoader = (initialPins: Pin[], initialCursor: string | null) => {
   const [pins, setPins] = useState<Pin[]>(initialPins);
   const [loading, setLoading] = useState(false);
-  const [cursor, setCursor] = useState<string | null>(initialCursor);
-  const [hasMore, setHasMore] = useState(true);
+  const [cursor, setCursor] = useState<string | null>(initialCursor); // ページネーションのために次のデータの位置を追跡
+  const [hasMore, setHasMore] = useState(true); // データがさらにあるかどうか(スクロールできるかどうか)
   
   const { ref, inView } = useInView({
     threshold: 0,
-    rootMargin: '100px',
+    rootMargin: '100px', // 要素が画面に入る100px手前で検知を開始
   });
 
   // pinsテーブルからデータを取得する。
   useEffect(() => {
     const loadMore = async () => {
+      // console.log("データが実行されるかどうか")
       if (inView && !loading && cursor && hasMore) {
         setLoading(true);
         try {
@@ -42,7 +44,8 @@ export const usePinLoader = (initialPins: Pin[], initialCursor: string | null) =
     };
 
     loadMore();
-  }, [inView, loading, cursor, hasMore]);
+  // }, [inView, loading, cursor, hasMore]);
+  }, []);
 
   return { pins, loading, hasMore, ref };
 };

@@ -1,5 +1,3 @@
-// app/api/saves/[pinId]/route.ts
-
 import { authOptions } from '@/app/libs/auth';
 import { prisma } from '@/app/libs/prisma';
 import { getServerSession } from 'next-auth';

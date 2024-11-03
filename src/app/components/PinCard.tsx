@@ -9,7 +9,6 @@ import { usePinBoardOperations } from "../atoms/boardAtom";
 
 interface PinCardProps {
   pin: Pin;
-  isLoaded: boolean;
   showTitle?: boolean; // 保存済みピン一覧で使用する場合にタイトルを表示するためのオプション
   isSaved?: boolean;   // ピンが保存済みかどうかを示すフラグ
   onSaveToggle?: () => void; // 保存/保存解除時のカスタムハンドラ（オプション）
@@ -17,18 +16,13 @@ interface PinCardProps {
 
 export const PinCard = ({ 
   pin, 
-  isLoaded, 
   showTitle = false,
   isSaved = false,
   onSaveToggle 
 }: PinCardProps) => {
-  const { handleSave } = usePinSave(pin.id);
-  const { saving }     = usePinBoardOperations(pin.id);
+  const { handleSave }                    = usePinSave({ pinId: pin.id, initialIsSaved: isSaved });
+  const { saving }                        = usePinBoardOperations(pin.id);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-
-  if (!isLoaded) {
-    return <PinCardSkeleton />;
-  }
 
   // ピン保存
   const handleSaveClick = async (e: React.MouseEvent) => {

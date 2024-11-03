@@ -1,14 +1,13 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useImageLoader } from '../hooks/useImageLoader';
 import { usePinLoader } from '../hooks/usePinLoader';
-import { Pin } from '../types/pin';
-import { PinCard } from './PinCard';
 import { PinCardSkeleton } from './PinCardSkeleton';
 import { useEffect } from 'react';
 import { fetchBoardsAtom } from '../atoms/boardAtom';
 import { useAtom } from 'jotai';
+import { PinCard } from './PinCard';
+import { Pin } from '../types/pin';
 
 interface PinGridProps {
   initialPins: Pin[];
@@ -18,7 +17,6 @@ interface PinGridProps {
 export function PinGrid({ initialPins, initialCursor }: PinGridProps) {
   const router = useRouter();
   const { pins, loading, hasMore, ref } = usePinLoader(initialPins, initialCursor);
-  const { imageLoadingStates, initialLoading } = useImageLoader(pins);
   const [, fetchBoards] = useAtom(fetchBoardsAtom);
 
   useEffect(() => {
@@ -40,22 +38,18 @@ export function PinGrid({ initialPins, initialCursor }: PinGridProps) {
   return (
     <div className="max-w-screen-2xl mx-auto px-4 py-6">
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-        {initialLoading ? (
-          renderSkeletons()
-        ) : (
-          pins.map((pin) => (
-            <div 
-              key={pin.id} 
-              onClick={() => handlePinClick(pin)}
-              className="cursor-pointer"
-            >
-              <PinCard 
-                pin={pin} 
-                isLoaded={imageLoadingStates[pin.id]} 
-              />
-            </div>
-          ))
-        )}
+        {pins.map((pin) => (
+          <div 
+            key={pin.id} 
+            onClick={() => handlePinClick(pin)}
+            className="cursor-pointer"
+          >
+            <PinCard
+              pin={pin}
+              isSaved={pin.saved}
+            />
+          </div>
+        ))}
       </div>
       
       {(hasMore || loading) && (

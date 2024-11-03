@@ -28,9 +28,9 @@ interface BoardSelectorProps {
   className?: string;
 }
 
+// トップ画面のpinホバー時に表示されなくなっているので調査。
 export const BoardSelector = ({ 
   pinId, 
-  onOpenChange,
   variant = 'card',
   className = '' 
 }: BoardSelectorProps) => {

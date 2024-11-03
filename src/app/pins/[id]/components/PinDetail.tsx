@@ -12,9 +12,6 @@ import { PinAuthorSection } from './PinAuthorSection';
 import { PinDetailSkeleton } from './PinDetailSkeleton';
 
 // TODO: 
-// フォローを止めるボタン実装
-// フォローボタンを表示。
-// コメント機能実装
 // ローディングがガタガタしていていけていないので調整する。
 
 interface PinDetailProps {

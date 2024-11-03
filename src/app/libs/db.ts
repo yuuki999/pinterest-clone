@@ -1,22 +1,25 @@
 import { prisma } from './prisma';
 import { Pin } from '@prisma/client';
 
+// サーバーサイドで値を取得する用
 
-// TODO: いろんな定義が入っているのでリファクタしたい。
+// 返り値の型定義を拡張
+type PinWithSaveStatus = Omit<Pin, 'userId' | 'boardId'> & {
+  saved: boolean;
+};
 
-
-// 返り値の型定義
 type GetPinsResult = {
-  pins: Pin[];
+  pins: PinWithSaveStatus[];
   nextCursor: string | null;
 };
 
-// ピン一覧取得
+// ピン一覧取得（保存状態付き）
 export async function getPins(options: {
   cursor?: string;
   limit?: number;
+  userId?: string; // ユーザーIDを追加
 }): Promise<GetPinsResult> {
-  const { cursor, limit = 20 } = options;
+  const { cursor, limit = 50, userId } = options;
 
   const pins = await prisma.pin.findMany({
     take: limit + 1,
@@ -36,6 +39,15 @@ export async function getPins(options: {
       imageUrl: true,
       createdAt: true,
       updatedAt: true,
+      // サブクエリで保存状態を取得
+      saves: userId ? {
+        where: {
+          userId: userId
+        },
+        select: {
+          id: true
+        }
+      } : false
     },
   });
 
@@ -45,8 +57,17 @@ export async function getPins(options: {
     nextCursor = nextItem?.id ?? null;
   }
 
+  // 保存状態を含むピンデータに変換
+  const pinsWithSaveStatus = pins.map(pin => {
+    const { saves, ...pinData } = pin;
+    return {
+      ...pinData,
+      saved: Array.isArray(saves) ? saves.length > 0 : false
+    };
+  });
+
   return {
-    pins,
+    pins: pinsWithSaveStatus,
     nextCursor,
   };
 }

@@ -12,24 +12,6 @@ export const usePinSave = ({ pinId, initialIsSaved = false }: UsePinSaveProps) =
   const [isSaved, setIsSaved] = useState(initialIsSaved); // 保存されていたらtrue
   const [isLoading, setIsLoading] = useState(false);
 
-  // 保存状態の、初期状態を取得
-  useEffect(() => {
-    const fetchSaveStatus = async () => {
-      try {
-        const response = await fetch(`/api/saves/${pinId}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch save status');
-        }
-        const data = await response.json();
-        setIsSaved(data.saved);
-      } catch (error) {
-        console.error('Failed to fetch save status:', error);
-      }
-    };
-
-    fetchSaveStatus();
-  }, [pinId]);
-
   const handleSave = async (e?: React.MouseEvent) => {
     e?.stopPropagation();
     
