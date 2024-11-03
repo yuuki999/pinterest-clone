@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useRouter } from 'next/navigation';
 import { usePinLoader } from '../hooks/usePinLoader';
@@ -8,6 +8,7 @@ import { fetchBoardsAtom } from '../atoms/boardAtom';
 import { useAtom } from 'jotai';
 import { PinCard } from './PinCard';
 import { Pin } from '../types/pin';
+import MasonryGrid from './grid/MasonryGrid';
 
 interface PinGridProps {
   initialPins: Pin[];
@@ -35,37 +36,35 @@ export function PinGrid({ initialPins, initialCursor }: PinGridProps) {
     ));
   };
 
-    // メイソンリーレイアウトを採用
-    // https://developer.mozilla.org/ja/docs/Web/CSS/CSS_grid_layout/Masonry_layout
-    return (
-      <div className="w-full">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4">
-          {pins.map((pin) => (
-            <div 
-              key={pin.id} 
-              onClick={() => handlePinClick(pin)}
-              className="flex justify-center"
-            >
-              <div className="w-full max-w-[300px] cursor-pointer">
-                <div className="aspect-[3/4] relative">
-                  <PinCard
-                    pin={pin}
-                    isSaved={pin.saved}
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-        
-        {(hasMore || loading) && (
+  return (
+    <div className="max-w-[2000px] mx-auto px-4 sm:px-6 lg:px-8">
+      <MasonryGrid columnWidth={300} gap={16}>
+        {pins.map((pin) => (
           <div 
-            ref={ref}
-            className="w-full py-8"
+            key={pin.id} 
+            onClick={() => handlePinClick(pin)}
+            className="w-full cursor-pointer"
           >
-            {loading && renderSkeletons()}
+            <PinCard
+              pin={pin}
+              isSaved={pin.saved}
+            />
           </div>
-        )}
-      </div>
-    );
+        ))}
+      </MasonryGrid>
+      
+      {(hasMore || loading) && (
+        <div 
+          ref={ref}
+          className="w-full py-8"
+        >
+          {loading && (
+            <MasonryGrid columnWidth={300} gap={16}>
+              {renderSkeletons()}
+            </MasonryGrid>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
