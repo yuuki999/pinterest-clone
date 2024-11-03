@@ -32,7 +32,7 @@ export default async function Home() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="max-w-[2000px] mx-auto px-16 py-16">
       <PinGrid initialPins={pinsWithSignedUrls} initialCursor={nextCursor} />
     </div>
   );

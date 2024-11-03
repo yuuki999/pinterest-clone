@@ -45,13 +45,18 @@ export const PinCard = ({
     <Card className="overflow-hidden border-none shadow-none hover:shadow-lg transition-all duration-300">
       <div className="relative group">
         <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-50 transition-opacity duration-200 rounded-lg" />
-        
-        <img
-          src={pin.imageUrl}
-          alt={pin.title}
-          className="w-full h-auto object-cover rounded-lg"
-          loading="lazy"
-        />
+          {/* アスペクト比を維持しない画像表示 */}
+          <img
+            src={pin.imageUrl}
+            alt={pin.title}
+            className="w-full object-cover"
+            style={{
+              // 画像ごとに元のアスペクト比を維持
+              height: 'auto',
+              maxWidth: '100%'
+            }}
+            loading="lazy"
+          />
 
         <BoardSelector
           pinId={pin.id}
