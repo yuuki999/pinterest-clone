@@ -20,6 +20,7 @@ export function Header() {
   const { theme, setTheme } = useTheme()
 
   // 検索処理
+  // TODO: あとで検索機能を追加する。
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!searchQuery.trim()) return
@@ -102,7 +103,7 @@ export function Header() {
         </div>
 
         {/* 検索フォーム */}
-        <div className="flex-1 max-w-2xl px-4">
+        {/* <div className="flex-1 max-w-2xl px-4">
           <form onSubmit={handleSearch} className="relative">
             <input
               type="search"
@@ -135,7 +136,7 @@ export function Header() {
               </button>
             )}
           </form>
-        </div>
+        </div> */}
 
         <div className="flex items-center space-x-4">
           {/* 通知ボタン */}
