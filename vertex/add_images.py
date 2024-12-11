@@ -1,4 +1,5 @@
 # add_images.py
+import asyncio
 from dotenv import load_dotenv
 import os
 from vertex import ImageSearchDemo
@@ -12,7 +13,7 @@ os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '/Users/itoi/projects/itoi/pinter
 
 
 # TODO: これを試してみて、既存インデックスに画像がアップできるかどうかを確認
-def add_new_images(image_dir):
+async def add_new_images(image_dir):
     """
     指定ディレクトリの画像をインデックスに追加
     
@@ -34,8 +35,12 @@ def add_new_images(image_dir):
         index_display_name=INDEX_NAME
     )
     
-    # 画像の追加とエンべディングの作成を実行
-    demo.add_images(image_dir)
+    # 画像の追加とエンべディングの作成を実行(管理者で実行)
+    # demo.add_images("admin_images", user_type='admin')
+    await demo.add_images("admin_images", user_type='admin')
+
+    # 特定のユーザーとして画像をアップロード
+    #demo.add_images("user_images", user_type='user', user_id='user123')
 
 if __name__ == "__main__":
     # 環境変数が正しく設定されているか確認
@@ -49,7 +54,7 @@ if __name__ == "__main__":
     NEW_IMAGES_DIR = "test_images"  # このディレクトリに新しい画像を置く
     
     # 画像の追加を実行
-    add_new_images(NEW_IMAGES_DIR)
+    asyncio.run(add_new_images(NEW_IMAGES_DIR))
 
 
 # python add_images.py

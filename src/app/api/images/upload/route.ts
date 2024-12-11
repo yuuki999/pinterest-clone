@@ -6,6 +6,10 @@ import { v4 as uuidv4 } from 'uuid';
 export async function POST(request: Request) {
   try {
     const { contentType } = await request.json();
+
+
+    // /images/cm2py3b6k000090kfeik1mwb3/20241211T132603_b641c043-3230-4d24-95a7-22638cd8bd88.jpeg
+    // このパスでアップロードしたい。
     
     if (!contentType.startsWith('image/')) {
       return NextResponse.json(

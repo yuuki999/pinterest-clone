@@ -7,6 +7,8 @@ import tensorflow_hub as hub
 import uuid
 from datetime import datetime
 import json
+from prisma import Prisma
+import traceback
 
 # 検索時の流れは以下の通り
 # 検索画像 → 特徴抽出 → ベクトル化 → インデックスで類似ベクトル検索 → 類似画像を返す
@@ -32,9 +34,13 @@ class ImageSearchDemo:
         
         # Initialize Vertex AI
         aiplatform.init(project=project_id, location=location)
+
+        # Initialize Prisma client
+        self.prisma = Prisma() 
         
         # Load TensorFlow Hub model for image embeddings
-        self.model = hub.load('https://tfhub.dev/google/imagenet/efficientnet_v2_imagenet1k_b0/feature_vector/1')
+        self.model = hub.load('https://tfhub.dev/google/imagenet/efficientnet_v2_imagenet1k_b0/feature_vector/2') # ここの処理が不安定すぎるので要改善。
+        print("Model loaded successfully.")
         
         # Initialize endpoint
         try:
@@ -48,22 +54,31 @@ class ImageSearchDemo:
             raise
         
     # Google Storageに画像をアップロード
-    def upload_images_to_gcs(self, local_dir):
+    def upload_images_to_gcs(self, local_dir, user_type='admin', user_id=None):
         """
-        Upload images from local directory to Cloud Storage
+        Upload images from local directory to Cloud Storage with original filenames
         
         Args:
             local_dir (str): Path to local directory containing images
+            user_type (str): 'admin' or 'user'
+            user_id (str): User ID for non-admin uploads
             
         Returns:
             list: List of GCS URIs for uploaded images
         """
         uploaded_uris = []
         
-        # Create images directory if it doesn't exist
-        images_dir = "images/"
-        if not any(blob.name.startswith(images_dir) for blob in self.bucket.list_blobs(prefix=images_dir)):
-            blob = self.bucket.blob(images_dir)
+        # Determine base directory based on user type
+        if user_type == 'admin':
+            base_dir = "images/admin/"
+        else:
+            if not user_id:
+                raise ValueError("user_id is required for non-admin uploads")
+            base_dir = f"images/users/{user_id}/"
+        
+        # Create base directory if it doesn't exist
+        if not any(blob.name.startswith(base_dir) for blob in self.bucket.list_blobs(prefix=base_dir)):
+            blob = self.bucket.blob(base_dir)
             blob.upload_from_string('')
         
         print(f"Scanning directory: {local_dir}")
@@ -73,13 +88,12 @@ class ImageSearchDemo:
             if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
                 local_path = os.path.join(local_dir, filename)
                 
-                # Create a blob with a unique name
-                destination_blob_name = f"images/{filename}"
+                # Use original filename
+                destination_blob_name = f"{base_dir}{filename}"
                 blob = self.bucket.blob(destination_blob_name)
                 
                 print(f"Uploading {filename} to GCS...")
                 try:
-                    # Upload the file
                     blob.upload_from_filename(local_path)
                     gcs_uri = f"gs://{self.bucket_name}/{destination_blob_name}"
                     uploaded_uris.append(gcs_uri)
@@ -169,27 +183,50 @@ class ImageSearchDemo:
             return index
 
     # 既存のインデックスに新しい画像を追加
-    def add_images(self, image_dir):
+    async def add_images(self, image_dir, user_type='admin', user_id=None):
         """
         画像をCloud Storageにアップロードし、インデックスに追加する
         
         Args:
             image_dir (str): 画像が含まれているディレクトリパス
+            user_type (str): 'admin' or 'user'
+            user_id (str): User ID for non-admin uploads
         """
         print("Adding new images to existing index...")
         
         # 1. 画像をCloud Storageにアップロード
-        uploaded_uris = self.upload_images_to_gcs(image_dir)
+        uploaded_uris = self.upload_images_to_gcs(image_dir, user_type, user_id)
         
         if not uploaded_uris:
             print("No images found to upload")
             return
             
         print(f"Successfully uploaded {len(uploaded_uris)} images")
+
+        # # Prismaクライアントの接続を開始
+        # await self.prisma.connect()
+
+        # try:
+        #     # DBへの保存
+        #     for uri in uploaded_uris:
+        #         blob_name = uri.replace(f"gs://{self.bucket_name}/", "")
+                
+        #         # Prismaでピンを作成
+        #         await self.prisma.pin.create({
+        #             "data": {
+        #                 "title": os.path.basename(blob_name),  # ファイル名をタイトルとして使用
+        #                 "description": "",  # 空の説明
+        #                 "imageUrl": blob_name,
+        #                 "userId": user_id if user_id else "admin",  # user_idが無い場合は"admin"を使用
+        #             }
+        #         })
+        # finally:
+        #     # 必ず接続を閉じる
+        #     await self.prisma.disconnect()
         
-        # 2. 埋め込みベクトルを生成
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        embeddings_dir = f"embeddings/batch_{timestamp}"
+        # 2. 埋め込みベクトルを生成（月単位でグループ化）
+        current_month = datetime.now().strftime("%Y%m")
+        embeddings_dir = f"embeddings/{current_month}"
         
         for i, uri in enumerate(uploaded_uris):
             blob_name = uri.replace(f"gs://{self.bucket_name}/", "")
@@ -198,7 +235,6 @@ class ImageSearchDemo:
             
             try:
                 print(f"\nProcessing {blob_name}...")
-                # Download image from GCS
                 blob.download_to_filename(local_path)
                 
                 # Generate embedding
@@ -206,19 +242,26 @@ class ImageSearchDemo:
                 embedding = self._generate_embedding(local_path)
                 print(f"Embedding shape: {len(embedding)}")
                 
-                # 3. 各埋め込みベクトルを個別のJSONファイルとして保存
+                # 3. エンベディングデータを作成（メタデータを追加）
                 embedding_data = {
                     "id": uri,
-                    "embedding": embedding
+                    "embedding": embedding,
+                    "metadata": {
+                        "image_path": blob_name,
+                        "user_type": user_type,
+                        "user_id": user_id,
+                        "created_at": datetime.now().isoformat(),
+                    }
                 }
                 
                 # 一時的なJSONファイルを作成
-                json_path = f"/tmp/embedding_{i}.json"
+                embedding_id = str(uuid.uuid4())
+                json_path = f"/tmp/embedding_{embedding_id}.json"
                 with open(json_path, 'w') as f:
                     json.dump(embedding_data, f)
                 
-                # Cloud Storageに個別のJSONファイルをアップロード
-                cloud_path = f"{embeddings_dir}/embedding_{i}.json"
+                # Cloud Storageに保存
+                cloud_path = f"{embeddings_dir}/{embedding_id}.json"
                 embedding_blob = self.bucket.blob(cloud_path)
                 embedding_blob.upload_from_filename(json_path)
                 
@@ -229,13 +272,11 @@ class ImageSearchDemo:
                 
             except Exception as e:
                 print(f"Error processing {blob_name}: {str(e)}")
-                print("Full error:")
-                import traceback
                 print(traceback.format_exc())
                 continue
             
+        # 4. インデックスを更新
         try:
-            # 4. インデックスを更新
             index = aiplatform.MatchingEngineIndex(
                 index_name=f"projects/{self.project_id}/locations/{self.location}/indexes/7368610270005952512"
             )
@@ -251,8 +292,6 @@ class ImageSearchDemo:
             
         except Exception as e:
             print(f"Error updating index: {str(e)}")
-            print("Full error:")
-            import traceback
             print(traceback.format_exc())
             raise
 

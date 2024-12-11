@@ -1,0 +1,155 @@
+generator client {
+    provider             = "prisma-client-py"
+    interface           = "asyncio"
+    recursive_type_depth = 5
+    output              = "../vertex/prisma"  // Pythonプロジェクト内に生成
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id             String    @id @default(cuid())
+    name           String?
+    email          String?   @unique
+    emailVerified  DateTime?
+    image          String?
+    hashedPassword String?
+    birthdate      DateTime
+    // ユーザーに関連するもの
+    accounts      Account[]
+    sessions      Session[]
+    boards        Board[]
+    pins          Pin[]
+    comments      Comment[]
+    likes          Like[]
+    saves          Save[]
+    followers      Follow[]  @relation("Followers")
+    following      Follow[]  @relation("Following")
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
+}
+
+model Account {
+    id                 String  @id @default(cuid())
+    userId             String
+    type               String
+    provider           String
+    providerAccountId  String
+    refresh_token      String?  @db.Text
+    access_token       String?  @db.Text
+    expires_at         Int?
+    token_type         String?
+    scope              String?
+    id_token           String?  @db.Text
+    session_state      String?
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([provider, providerAccountId])
+}
+
+model Session {
+    id           String   @id @default(cuid())
+    sessionToken String   @unique
+    userId       String
+    expires      DateTime
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Pinterest固有のモデル
+model Board {
+    id          String   @id @default(cuid())
+    title       String
+    description String?
+    isPrivate   Boolean  @default(false)
+    // ユーザーとの関連
+    userId      String
+    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    // ピンとの関連
+    pins        Pin[]
+    // タイムスタンプ
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    // インデックスを追加してパフォーマンスを向上
+    @@index([userId])
+}
+
+model Pin {
+    id          String    @id @default(cuid())
+    title       String
+    description String?
+    imageUrl    String
+    userId      String
+    user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    boardId     String?
+    board       Board?    @relation(fields: [boardId], references: [id], onDelete: SetNull)
+    comments    Comment[]
+    likes       Like[]
+    saves       Save[]
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+
+    @@index([userId])
+    @@index([boardId])
+}
+
+// これもまだ実装できていない。
+model Comment {
+    id        String   @id @default(cuid())
+    text      String
+    pinId     String
+    userId    String
+    pin       Pin      @relation(fields: [pinId], references: [id], onDelete: Cascade)
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([pinId])
+    @@index([userId])
+}
+
+// いいね機能のためのモデル
+model Like {
+    id        String   @id @default(cuid()) /// @db.Comment('いいねの一意識別子')
+    userId    String                        /// @db.Comment('いいねを行ったユーザーの外部キー')
+    pinId     String                        /// @db.Comment('いいねされたピンの外部キー')
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    pin       Pin      @relation(fields: [pinId], references: [id], onDelete: Cascade)
+    createdAt DateTime @default(now())
+
+    @@unique([userId, pinId])
+    @@index([userId])
+    @@index([pinId])
+}
+
+// 保存機能のためのモデル
+model Save {
+    id        String   @id @default(cuid()) /// @db.Comment('保存（ブックマーク）の一意識別子')
+    userId    String                        /// @db.Comment('ピンを保存したユーザーの外部キー')
+    pinId     String                        /// @db.Comment('保存されたピンの外部キー')
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    pin       Pin      @relation(fields: [pinId], references: [id], onDelete: Cascade)
+    createdAt DateTime @default(now())
+
+    @@unique([userId, pinId])
+    @@index([userId])
+    @@index([pinId])
+}
+
+// フォロー機能のためのモデル(中間テーブル)
+model Follow {
+    id          String   @id @default(cuid()) /// @db.Comment('フォロー関係の一意識別子')
+    followerId  String                        /// @db.Comment('フォローを実行したユーザー（フォロワー）のID')
+    followingId String                        /// @db.Comment('フォローされているユーザーのID')
+    follower    User     @relation("Followers", fields: [followerId], references: [id], onDelete: Cascade)
+    following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+    createdAt   DateTime @default(now())
+
+    @@unique([followerId, followingId])
+    @@index([followerId])
+    @@index([followingId])
+}
+

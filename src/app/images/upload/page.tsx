@@ -34,7 +34,7 @@ export default function CreatePinPage() {
   };
 
   const uploadToS3 = async (file: File): Promise<{ url: string; key: string }> => {
-    const response = await fetch('/api/images/upload', {
+    const response = await fetch('/api/images/upload/gc', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contentType: file.type }),

@@ -10,15 +10,14 @@ export async function GET(request: Request) {
     const cursor = searchParams.get('cursor');
     const limit = 20;
 
-    // クエリパラメータに基づいてページネーションを設定
     const pins = await prisma.pin.findMany({
-      take: limit + 1, // 次のページがあるかチェックするために1つ多く取得
+      take: limit + 1,
       orderBy: {
         createdAt: 'desc'
       },
       ...(cursor
         ? {
-            skip: 1, // カーソルの位置のアイテムをスキップ
+            skip: 1,
             cursor: {
               id: cursor,
             },
@@ -27,14 +26,11 @@ export async function GET(request: Request) {
     });
 
     let nextCursor: string | undefined = undefined;
-
-    // 次のページが存在するかチェック
     if (pins.length > limit) {
-      const nextItem = pins.pop(); // 余分に取得した1件を削除
-      nextCursor = nextItem?.id;    // 次のページのカーソルとして使用
+      const nextItem = pins.pop();
+      nextCursor = nextItem?.id;
     }
 
-    // 署名付きURLの生成
     const pinsWithSignedUrls = await Promise.all(
       pins.map(async (pin) => ({
         ...pin,
@@ -46,7 +42,6 @@ export async function GET(request: Request) {
       pins: pinsWithSignedUrls,
       nextCursor,
     });
-
   } catch (error) {
     console.error('Error fetching pins:', error);
     return NextResponse.json(

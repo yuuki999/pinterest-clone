@@ -245,6 +245,17 @@ gcloud ai index-endpoints describe 5566554692546199552 \
     --region=asia-northeast1
 ```
 
+GCSのCORSを変更する
+```
+gcloud storage buckets update gs://sisterly --cors-file=cors.json
+```
+
+
+特定のバケットのファイルを削除する
+```
+gsutil -m rm -r "gs://sisterly/images/admin/**"
+```
+
 ### 検索アルゴリズム
 
 brute-force search
@@ -256,7 +267,30 @@ Sisterlyをアプリ名とする。
 yuuki.itoi6120@gmail.comをGCのアカウントとして使っている。
 
 
+### GCS構成
+
+画像ファイル
+images/
+  ├── admin/                    # 管理者用画像
+  │   └── YYYYMMDD_HHMMSS_uniqueid.jpg
+  └── users/                    # 一般ユーザー用画像
+      └── {user_id}/           # ユーザーIDごとのディレクトリ
+          └── YYYYMMDD_HHMMSS_uniqueid.jpg
+
+エンべディング
+embeddings/
+  └── YYYYMM/                  # 月単位でグループ化
+      └── {embedding_id}.json  # UUID形式
+
 ### 備考
 
 有益記事
 https://zenn.dev/makochan/articles/baf89362e23f2c
+
+
+
+### TODO:
+
+
+・下の方にスクロールしても画像が追加で表示されない。
+・画像はS3にアップロードされてる。GCSに統一したほうがいいかも

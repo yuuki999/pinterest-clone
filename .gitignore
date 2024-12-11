@@ -44,3 +44,5 @@ myenv/
 venv/
 
 secret/
+
+vertex/admin_images/
