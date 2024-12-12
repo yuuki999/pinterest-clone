@@ -40,6 +40,7 @@ export function PinDetail({ pin, initialIsFollowing }: PinDetailProps) {
   useEffect(() => {
     const fetchAndPreloadImage = async () => {
       try {
+        // これを治す。
         setIsLoading(true);
         const response = await fetch(`/api/pins/${pin.id}/signed-url`);
         if (!response.ok) throw new Error('Failed to fetch signed URL');

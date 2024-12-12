@@ -12,6 +12,11 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'pin-images999.s3.us-east-1.amazonaws.com',
         pathname: '/**', // すべてのパスを許可
+      },
+      {
+        protocol: 'https',
+        hostname: 'storage.googleapis.com',
+        pathname: '/**',
       }
     ],
   },

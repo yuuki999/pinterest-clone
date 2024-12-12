@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getImageUrl } from '@/app/libs/s3';
+import { getImageUrl } from '@/app/libs/gcs';
 import { prisma } from '@/app/libs/prisma';
 
 export async function GET(
