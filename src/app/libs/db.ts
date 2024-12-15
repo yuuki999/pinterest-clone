@@ -72,6 +72,69 @@ export async function getPins(options: {
   };
 }
 
+export async function getRandomPins(options: {
+  limit?: number;
+  excludePinId?: string;
+  userId?: string;
+}): Promise<GetPinsResult> {
+  const { limit = 8, excludePinId, userId } = options;
+
+  const pins = await prisma.pin.findMany({
+    take: limit,
+    where: {
+      ...(excludePinId && {
+        NOT: {
+          id: excludePinId
+        }
+      })
+    },
+    // ランダムソートに修正
+    orderBy: {
+      createdAt: 'desc' // または他の基準でソート
+    },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      imageUrl: true,
+      createdAt: true,
+      updatedAt: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          image: true,
+        }
+      },
+      saves: userId ? {
+        where: {
+          userId: userId
+        },
+        select: {
+          id: true
+        }
+      } : false
+    },
+  });
+
+  // ランダムにシャッフル
+  const shuffledPins = [...pins].sort(() => Math.random() - 0.5);
+  const limitedPins = shuffledPins.slice(0, limit);
+
+  const pinsWithSaveStatus = limitedPins.map(pin => {
+    const { saves, ...pinData } = pin;
+    return {
+      ...pinData,
+      saved: Array.isArray(saves) ? saves.length > 0 : false
+    };
+  });
+
+  return {
+    pins: pinsWithSaveStatus,
+    nextCursor: null,
+  };
+}
+
 // ピン作成
 export async function createPin(data: {
   title: string;
