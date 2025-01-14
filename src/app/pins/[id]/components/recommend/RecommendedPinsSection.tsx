@@ -19,6 +19,7 @@ export function RecommendedPinsSection({ currentPinId, initialPins = [] }: Recom
   useEffect(() => {
     const loadRecommendedPins = async () => {
       try {
+        // TODO: ここでvertex aiを使用する。
         const response = await fetch(`/api/pins/recommended?excludePinId=${currentPinId}`, {
           cache: 'no-store'
         });
@@ -33,7 +34,8 @@ export function RecommendedPinsSection({ currentPinId, initialPins = [] }: Recom
       }
     };
 
-    loadRecommendedPins();
+    // TODO: フェーズ2の機能
+    // loadRecommendedPins();
   }, [currentPinId]);
 
   const handlePinClick = (pin: Pin) => {

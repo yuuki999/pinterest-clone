@@ -19,6 +19,7 @@ const nextConfig = {
         pathname: '/**',
       }
     ],
+    unoptimized: process.env.NODE_ENV === 'development', // 開発環境でイメージ最適化をスキップ
   },
 }
 

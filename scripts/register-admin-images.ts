@@ -30,7 +30,9 @@ async function registerAdminImages() {
     const adminUserId = await getOrCreateAdminUser()
     
     const imagesPath = '/images/admin'
-    const files = fs.readdirSync(path.join(process.cwd(), 'vertex/admin_images'))
+    // パスを修正: プロジェクトルートからの相対パスに変更
+    const adminImagesDir = path.join(process.cwd(), '..', 'vertex/admin_images')
+    const files = fs.readdirSync(adminImagesDir)
     
     console.log(`Found ${files.length} images to register`)
 

@@ -179,3 +179,27 @@ export async function deletePin(id: string): Promise<Pin> {
     where: { id },
   });
 }
+
+// 類似画像検索の実装
+export async function getSimilarPins({ 
+  vectorQuery,
+  limit = 8,
+  excludePinId
+}: {
+  vectorQuery: number[];
+  limit?: number;
+  excludePinId?: string;
+}) {
+  // Prismaでベクトル類似度検索を実行
+  // Note: これにはデータベースがベクトル検索をサポートしている必要があります
+  const pins = await prisma.$queryRaw`
+    SELECT *, 
+    1 - (imageVector <-> ${vectorQuery}::vector) as similarity
+    FROM "Pin"
+    WHERE id != ${excludePinId}
+    ORDER BY similarity DESC
+    LIMIT ${limit}
+  `;
+  
+  return { pins };
+}
